@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>⚔️ Königreich der Ritter</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<!-- TOP -->
+<div id="top-bar">
+  <div class="res-chip"><span class="ico">🪵</span><span class="val" id="r-wood">50</span><span class="lbl">HOLZ</span></div>
+  <div class="res-chip"><span class="ico">⚙️</span><span class="val" id="r-metal">30</span><span class="lbl">METALL</span></div>
+  <div class="res-chip"><span class="ico">🪨</span><span class="val" id="r-stone">20</span><span class="lbl">STEIN</span></div>
+  <div class="res-chip"><span class="ico">🌾</span><span class="val" id="r-food">40</span><span class="lbl">NAHRUNG</span></div>
+  <div class="res-chip"><span class="ico">💰</span><span class="val" id="r-gold">120</span><span class="lbl">GOLD</span></div>
+  <div class="res-chip"><span class="ico">👥</span><span class="val" id="r-pop">0</span><span class="lbl">EINHEITEN</span></div>
+  <div id="kingdom-name">⚜ DEIN KÖNIGREICH ⚜</div>
+  <div id="day-chip">☀️ TAG 1</div>
+</div>
+
+<!-- UNIT LIST -->
+<div id="unit-list"></div>
+
+<!-- SIDE PANEL -->
+<div id="side-panel">
+  <div id="panel-tabs">
+    <div class="ptab active" onclick="showTab('build')">BAUEN</div>
+    <div class="ptab" onclick="showTab('units')">EINHEITEN</div>
+    <div class="ptab" onclick="showTab('info')">INFO</div>
+  </div>
+  <div id="panel-body"></div>
+</div>
+
+<!-- BOTTOM -->
+<div id="bottom-bar">
+  <button class="tb" onclick="setMode('move')"><span class="ti">🏃</span>Bewegen<span class="tc">Spieler</span></button>
+  <div class="tb-sep"></div>
+  <button class="tb" id="tb-wall" onclick="setMode('wall')"><span class="ti">🧱</span>Mauer<span class="tc">5🪵 10🪨</span></button>
+  <button class="tb" id="tb-tower" onclick="setMode('tower')"><span class="ti">🗼</span>Turm<span class="tc">15🪵 12⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-gate" onclick="setMode('gate')"><span class="ti">🚪</span>Tor<span class="tc">12🪵 10🪨 8⚙️</span></button>
+  <button class="tb" id="tb-keep" onclick="setMode('keep')"><span class="ti">🏰</span>Burg<span class="tc">30🪵 20⚙️ 20🪨</span></button>
+  <button class="tb" id="tb-barracks" onclick="setMode('barracks')"><span class="ti">🛡️</span>Kaserne<span class="tc">18🪵 12⚙️ 5🪨</span></button>
+  <button class="tb" id="tb-farm" onclick="setMode('farm')"><span class="ti">🌾</span>Farm<span class="tc">10🪵 4🪨</span></button>
+  <button class="tb" id="tb-market" onclick="setMode('market')"><span class="ti">🏪</span>Markt<span class="tc">20🪵 10⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-catapult" onclick="setMode('catapult')"><span class="ti">🏹</span>Katapult<span class="tc">18🪵 15⚙️</span></button>
+  <button class="tb" id="tb-cannon" onclick="setMode('cannon')"><span class="ti">💣</span>Kanone<span class="tc">10🪵 25⚙️</span></button>
+  <button class="tb" id="tb-crossbow" onclick="setMode('crossbow')"><span class="ti">🎯</span>Riesenarmbrust<span class="tc">14🪵 16⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-smithy" onclick="setMode('smithy')"><span class="ti">⚒️</span>Schmiede<span class="tc">15🪵 20⚙️ 10🪨</span></button>
+  <div class="tb-sep"></div>
+  <button class="tb" onclick="openRecruit()"><span class="ti">⚔️</span>Rekrutieren<span class="tc">Einheiten</span></button>
+  <button class="tb danger" onclick="startWave()"><span class="ti">🔥</span>Welle<span class="tc">Angriff!</span></button>
+</div>
+
+<!-- RECRUIT MODAL -->
+<div class="modal" id="modal-recruit">
+  <h2>REKRUTIERUNG</h2>
+  <p class="flavor">"Für König und Vaterland!"</p>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">⚔️ Ritter</div>
+      <div class="mi-cost">15💰 + 2🌾/Tag — Unbegrenzt!</div>
+      <div class="mi-stat">HP: 300 | ATK: 10–20 | Kämpft automatisch für dich!</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('knight')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🏹 Bogenschütze</div>
+      <div class="mi-cost">20💰 + 3🌾/Tag</div>
+      <div class="mi-stat">HP: 150 | ATK: 20–30 | Fernkampf 20m</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('archer')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🗡️ Speerkämpfer</div>
+      <div class="mi-cost">25💰 + 4🌾/Tag</div>
+      <div class="mi-stat">HP: 90 | ATK: 20 | Anti-Kavallerie</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('spear')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🐴 Kavallerist</div>
+      <div class="mi-cost">50💰 + 8🌾/Tag</div>
+      <div class="mi-stat">HP: 150 | ATK: 35 | Schneller Reiter</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('cavalry')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🧙 Magier</div>
+      <div class="mi-cost">80💰 + 6🌾/Tag</div>
+      <div class="mi-stat">HP: 500 | ATK: 500 | Flächenmagie</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('mage')">ANWERBEN</button>
+  </div>
+  <button class="modal-close" onclick="closeModal('modal-recruit')">SCHLIESSEN</button>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal" id="modal-shop">
+  <h2>HÄNDLER</h2>
+  <p class="flavor" id="shop-flavor">"Die besten Waren im Königreich!"</p>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🪵 Holz ×15</div><div class="mi-cost">18 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('wood',15,18)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">⚙️ Metall ×8</div><div class="mi-cost">22 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('metal',8,22)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🪨 Stein ×8</div><div class="mi-cost">15 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('stone',8,15)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🌾 Nahrung ×20</div><div class="mi-cost">12 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('food',20,12)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">❤️ Burg reparieren</div><div class="mi-cost">40 Gold → +50 HP</div></div>
+    <button class="mi-btn" onclick="buyRes('repair',50,40)">KAUFEN</button>
+  </div>
+  <button class="modal-close" onclick="closeModal('modal-shop')">SCHLIESSEN</button>
+</div>
+
+<!-- EQUIP MODAL -->
+<div class="modal" id="modal-equip">
+  <h2>AUSRÜSTUNG</h2>
+  <p class="flavor">"Wähle eine Verbesserung für deine Einheit!"</p>
+  <div id="equip-body"></div>
+  <button class="modal-close" onclick="closeModal('modal-equip')">SCHLIESSEN</button>
+</div>
+
+<!-- SCHMIEDE MODAL -->
+<div class="modal" id="modal-smithy" style="max-width:460px;">
+  <h2>⚒️ SCHMIEDE</h2>
+  <p class="flavor" id="smithy-flavor">"Ich schmiedle das beste Eisen im ganzen Land!"</p>
+  <div id="smithy-tabs" style="display:flex;gap:6px;margin-bottom:12px;">
+    <button class="mi-btn" onclick="smithyTab('schwerter')" id="stab-schwerter" style="flex:1;">⚔️ Schwerter</button>
+    <button class="mi-btn" onclick="smithyTab('schmied')" id="stab-schmied" style="flex:1;">👨‍🔧 Schmied</button>
+  </div>
+  <div id="smithy-body"></div>
+  <button class="modal-close" onclick="closeModal('modal-smithy')">SCHLIESSEN</button>
+</div>
+
+<canvas id="hp-canvas"></canvas>
+<div id="dragon-alert"><div class="da-title">🐉 ACHTUNG — DRACHE!</div><div class="da-sub" id="dragon-sub">Ein mächtiger Drache greift an!</div></div>
+<div id="banner"><div id="banner-title">⚔️</div><div id="banner-sub"></div></div>
+<div id="notif"></div>
+<div id="hint">WASD / PFEILE → Spieler bewegen<br>RECHTS-ZIEHEN → Kamera<br>SCROLLEN → Zoom | E → Interagieren</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
