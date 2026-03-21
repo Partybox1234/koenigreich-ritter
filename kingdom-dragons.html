@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>⚔️ Königreich der Ritter</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+:root{
+  --gold:#e8c060;--gold2:#f5d97a;--gold-dim:rgba(232,192,96,0.5);
+  --border:rgba(200,160,70,0.35);--border-bright:rgba(232,192,96,0.7);
+  --bg-panel:rgba(6,4,10,0.93);--bg-hover:rgba(200,160,70,0.14);
+  --red:#cc3333;--green:#44aa44;--blue:#3366cc;
+  --text:rgba(230,210,170,0.88);--text-dim:rgba(200,170,120,0.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+body{background:#050308;overflow:hidden;font-family:'Cinzel',serif;}
+canvas{display:block;}
+
+/* ════ TOP BAR ════ */
+#top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  background:linear-gradient(180deg,rgba(0,0,0,0.9) 0%,transparent 100%);
+  pointer-events:none;
+}
+.res-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:3px;padding:4px 10px;
+}
+.res-chip .ico{font-size:13px;}
+.res-chip .val{font-size:13px;font-weight:700;color:var(--gold);min-width:28px;}
+.res-chip .lbl{font-size:7px;letter-spacing:2px;color:var(--text-dim);}
+#kingdom-name{
+  margin-left:auto;font-family:'Cinzel Decorative',serif;
+  font-size:14px;color:var(--gold);letter-spacing:3px;
+  text-shadow:0 0 16px rgba(232,192,96,0.5);
+}
+#day-chip{
+  background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:3px;padding:4px 12px;font-size:11px;
+  color:var(--text-dim);letter-spacing:2px;
+}
+
+/* ════ SIDE PANEL ════ */
+#side-panel{
+  position:fixed;right:0;top:52px;bottom:90px;z-index:20;
+  width:230px;background:var(--bg-panel);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  pointer-events:all;
+}
+#panel-tabs{display:flex;border-bottom:1px solid var(--border);}
+.ptab{
+  flex:1;padding:8px 4px;font-size:8px;letter-spacing:2px;
+  color:var(--text-dim);cursor:pointer;text-align:center;
+  border-bottom:2px solid transparent;transition:all 0.2s;
+}
+.ptab:hover{color:var(--gold);background:var(--bg-hover);}
+.ptab.active{color:var(--gold);border-bottom-color:var(--gold);}
+#panel-body{flex:1;overflow-y:auto;padding:10px;}
+#panel-body::-webkit-scrollbar{width:3px;}
+#panel-body::-webkit-scrollbar-track{background:transparent;}
+#panel-body::-webkit-scrollbar-thumb{background:var(--border);}
+
+.panel-section{margin-bottom:14px;}
+.panel-section h4{font-size:8px;letter-spacing:3px;color:var(--text-dim);
+  border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px;}
+
+/* Cards */
+.card{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:3px;padding:8px 10px;margin-bottom:6px;cursor:pointer;
+  transition:all 0.18s;
+}
+.card:hover{background:var(--bg-hover);border-color:var(--border-bright);}
+.card.active{background:rgba(232,192,96,0.12);border-color:var(--gold);}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.card-name{font-size:10px;color:var(--gold);}
+.card-icon{font-size:16px;}
+.card-desc{font-family:'Crimson Text',serif;font-size:11px;color:var(--text-dim);line-height:1.4;}
+.card-cost{font-size:9px;color:rgba(200,160,70,0.55);margin-top:4px;}
+.card-stat{display:flex;gap:8px;margin-top:4px;}
+.stat-pill{font-size:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  border-radius:2px;padding:1px 5px;color:var(--text-dim);}
+
+/* Info box */
+#info-box{
+  background:rgba(255,255,255,0.02);border:1px solid var(--border);
+  border-radius:3px;padding:10px;margin-bottom:8px;
+}
+#info-box h5{font-size:9px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;}
+#info-box p{font-family:'Crimson Text',serif;font-size:12px;color:var(--text);line-height:1.6;}
+#info-box .hi{color:var(--gold2);font-weight:600;}
+
+/* ════ BOTTOM BAR ════ */
+#bottom-bar{
+  position:fixed;bottom:0;left:0;right:230px;z-index:20;
+  display:flex;align-items:center;gap:6px;padding:10px 14px 14px;
+  background:linear-gradient(0deg,rgba(0,0,0,0.95) 0%,transparent 100%);
+  pointer-events:all;flex-wrap:wrap;
+}
+.tb{
+  background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:3px;color:var(--gold);font-family:'Cinzel',serif;
+  font-size:9px;letter-spacing:1px;padding:7px 10px;
+  cursor:pointer;transition:all 0.18s;text-align:center;min-width:80px;
+}
+.tb:hover{background:var(--bg-hover);border-color:var(--border-bright);transform:translateY(-1px);}
+.tb.active{background:rgba(232,192,96,0.2);border-color:var(--gold);
+  box-shadow:0 0 12px rgba(232,192,96,0.25);}
+.tb .ti{font-size:16px;display:block;margin-bottom:2px;}
+.tb .tc{display:block;font-size:8px;color:var(--text-dim);margin-top:1px;}
+.tb-sep{width:1px;height:50px;background:var(--border);margin:0 2px;}
+.tb.danger{border-color:rgba(200,60,60,0.4);color:#ff9090;}
+.tb.danger:hover{background:rgba(200,60,60,0.15);border-color:var(--red);}
+
+/* ════ MODALS ════ */
+.modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:40;background:var(--bg-panel);border:1px solid var(--border-bright);
+  border-radius:5px;padding:24px;min-width:320px;max-width:400px;
+  display:none;pointer-events:all;
+  box-shadow:0 0 60px rgba(0,0,0,0.9),0 0 20px rgba(232,192,96,0.1);
+}
+.modal.show{display:block;}
+.modal h2{font-family:'Cinzel Decorative',serif;font-size:15px;
+  letter-spacing:3px;color:var(--gold);text-align:center;margin-bottom:4px;}
+.modal .flavor{font-family:'Crimson Text',serif;font-style:italic;
+  font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:16px;}
+.modal-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;border-bottom:1px solid rgba(200,160,70,0.1);
+}
+.modal-item:last-of-type{border:none;}
+.mi-info .mi-name{font-size:11px;color:var(--text);}
+.mi-info .mi-cost{font-size:9px;color:var(--text-dim);margin-top:2px;}
+.mi-info .mi-stat{font-size:8px;color:rgba(100,180,100,0.7);margin-top:1px;}
+.mi-btn{
+  background:rgba(200,160,70,0.12);border:1px solid var(--border);
+  color:var(--gold);font-family:'Cinzel',serif;font-size:8px;
+  letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;
+  transition:all 0.18s;
+}
+.mi-btn:hover{background:rgba(200,160,70,0.28);}
+.modal-close{
+  width:100%;margin-top:12px;background:transparent;
+  border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);
+  font-family:'Cinzel',serif;font-size:8px;letter-spacing:2px;
+  padding:6px;cursor:pointer;border-radius:2px;transition:all 0.2s;
+}
+.modal-close:hover{border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);}
+
+/* ════ NOTIF ════ */
+#notif{
+  position:fixed;top:60px;left:50%;transform:translateX(-50%);
+  font-size:12px;letter-spacing:2px;color:var(--gold2);
+  text-shadow:0 0 12px rgba(240,208,80,0.6);
+  background:rgba(0,0,0,0.7);border:1px solid var(--border);
+  padding:6px 18px;border-radius:3px;
+  opacity:0;transition:opacity 0.4s;white-space:nowrap;z-index:50;
+  pointer-events:none;
+}
+/* ════ BANNER ════ */
+#banner{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;pointer-events:none;z-index:50;
+  opacity:0;transition:opacity 0.5s;
+}
+#banner.show{opacity:1;}
+#banner-title{
+  font-family:'Cinzel Decorative',serif;font-size:48px;font-weight:700;
+  color:var(--gold);text-shadow:0 0 40px rgba(232,150,0,0.9),0 0 80px rgba(232,80,0,0.3);
+  letter-spacing:5px;
+}
+#banner-sub{font-family:'Crimson Text',serif;font-style:italic;
+  font-size:18px;color:rgba(230,200,120,0.7);margin-top:8px;}
+
+/* ════ CTRL HINT ════ */
+#hint{
+  position:fixed;bottom:90px;left:14px;z-index:20;
+  font-size:8px;letter-spacing:2px;color:rgba(200,160,70,0.25);line-height:2;
+  pointer-events:none;
+}
+
+/* ════ UNIT LIST ════ */
+#unit-list{
+  position:fixed;left:14px;top:60px;z-index:20;
+  display:flex;flex-direction:column;gap:4px;pointer-events:all;
+}
+.unit-chip{
+  background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:3px;padding:4px 8px;font-size:9px;
+  color:var(--text-dim);letter-spacing:1px;cursor:pointer;
+  transition:all 0.18s;display:flex;align-items:center;gap:6px;
+}
+.unit-chip:hover{border-color:var(--border-bright);color:var(--gold);}
+.unit-chip .uhp{font-size:8px;color:rgba(100,200,100,0.6);}
+.unit-chip.selected{border-color:var(--gold);color:var(--gold);background:rgba(232,192,96,0.1);}
+
+/* ════ HP BARS (CSS 3D labels via overlay canvas) ════ */
+#hp-canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:15;}
+
+/* ════ DRAGON ALERT ════ */
+#dragon-alert{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:60;pointer-events:none;opacity:0;transition:opacity 0.5s;
+  text-align:center;
+}
+#dragon-alert.show{opacity:1;}
+#dragon-alert .da-title{
+  font-family:'Cinzel Decorative',serif;font-size:52px;font-weight:700;
+  color:#ff4400;text-shadow:0 0 40px rgba(255,80,0,0.9),0 0 80px rgba(200,0,0,0.5);
+  letter-spacing:4px;
+}
+#dragon-alert .da-sub{
+  font-family:'Crimson Text',serif;font-style:italic;
+  font-size:18px;color:rgba(255,180,80,0.8);margin-top:6px;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<!-- TOP -->
+<div id="top-bar">
+  <div class="res-chip"><span class="ico">🪵</span><span class="val" id="r-wood">50</span><span class="lbl">HOLZ</span></div>
+  <div class="res-chip"><span class="ico">⚙️</span><span class="val" id="r-metal">30</span><span class="lbl">METALL</span></div>
+  <div class="res-chip"><span class="ico">🪨</span><span class="val" id="r-stone">20</span><span class="lbl">STEIN</span></div>
+  <div class="res-chip"><span class="ico">🌾</span><span class="val" id="r-food">40</span><span class="lbl">NAHRUNG</span></div>
+  <div class="res-chip"><span class="ico">💰</span><span class="val" id="r-gold">120</span><span class="lbl">GOLD</span></div>
+  <div class="res-chip"><span class="ico">👥</span><span class="val" id="r-pop">0</span><span class="lbl">EINHEITEN</span></div>
+  <div id="kingdom-name">⚜ DEIN KÖNIGREICH ⚜</div>
+  <div id="day-chip">☀️ TAG 1</div>
+</div>
+
+<!-- UNIT LIST -->
+<div id="unit-list"></div>
+
+<!-- SIDE PANEL -->
+<div id="side-panel">
+  <div id="panel-tabs">
+    <div class="ptab active" onclick="showTab('build')">BAUEN</div>
+    <div class="ptab" onclick="showTab('units')">EINHEITEN</div>
+    <div class="ptab" onclick="showTab('info')">INFO</div>
+  </div>
+  <div id="panel-body"></div>
+</div>
+
+<!-- BOTTOM -->
+<div id="bottom-bar">
+  <button class="tb" onclick="setMode('move')"><span class="ti">🏃</span>Bewegen<span class="tc">Spieler</span></button>
+  <div class="tb-sep"></div>
+  <button class="tb" id="tb-wall" onclick="setMode('wall')"><span class="ti">🧱</span>Mauer<span class="tc">5🪵 10🪨</span></button>
+  <button class="tb" id="tb-tower" onclick="setMode('tower')"><span class="ti">🗼</span>Turm<span class="tc">15🪵 12⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-gate" onclick="setMode('gate')"><span class="ti">🚪</span>Tor<span class="tc">12🪵 10🪨 8⚙️</span></button>
+  <button class="tb" id="tb-keep" onclick="setMode('keep')"><span class="ti">🏰</span>Burg<span class="tc">30🪵 20⚙️ 20🪨</span></button>
+  <button class="tb" id="tb-barracks" onclick="setMode('barracks')"><span class="ti">🛡️</span>Kaserne<span class="tc">18🪵 12⚙️ 5🪨</span></button>
+  <button class="tb" id="tb-farm" onclick="setMode('farm')"><span class="ti">🌾</span>Farm<span class="tc">10🪵 4🪨</span></button>
+  <button class="tb" id="tb-market" onclick="setMode('market')"><span class="ti">🏪</span>Markt<span class="tc">20🪵 10⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-catapult" onclick="setMode('catapult')"><span class="ti">🏹</span>Katapult<span class="tc">18🪵 15⚙️</span></button>
+  <button class="tb" id="tb-cannon" onclick="setMode('cannon')"><span class="ti">💣</span>Kanone<span class="tc">10🪵 25⚙️</span></button>
+  <button class="tb" id="tb-crossbow" onclick="setMode('crossbow')"><span class="ti">🎯</span>Riesenarmbrust<span class="tc">14🪵 16⚙️ 8🪨</span></button>
+  <button class="tb" id="tb-smithy" onclick="setMode('smithy')"><span class="ti">⚒️</span>Schmiede<span class="tc">15🪵 20⚙️ 10🪨</span></button>
+  <div class="tb-sep"></div>
+  <button class="tb" onclick="openRecruit()"><span class="ti">⚔️</span>Rekrutieren<span class="tc">Einheiten</span></button>
+  <button class="tb danger" onclick="startWave()"><span class="ti">🔥</span>Welle<span class="tc">Angriff!</span></button>
+</div>
+
+<!-- RECRUIT MODAL -->
+<div class="modal" id="modal-recruit">
+  <h2>REKRUTIERUNG</h2>
+  <p class="flavor">"Für König und Vaterland!"</p>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">⚔️ Ritter</div>
+      <div class="mi-cost">15💰 + 2🌾/Tag — Unbegrenzt!</div>
+      <div class="mi-stat">HP: 300 | ATK: 10–20 | Kämpft automatisch für dich!</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('knight')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🏹 Bogenschütze</div>
+      <div class="mi-cost">20💰 + 3🌾/Tag</div>
+      <div class="mi-stat">HP: 150 | ATK: 20–30 | Fernkampf 20m</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('archer')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🗡️ Speerkämpfer</div>
+      <div class="mi-cost">25💰 + 4🌾/Tag</div>
+      <div class="mi-stat">HP: 90 | ATK: 20 | Anti-Kavallerie</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('spear')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🐴 Kavallerist</div>
+      <div class="mi-cost">50💰 + 8🌾/Tag</div>
+      <div class="mi-stat">HP: 150 | ATK: 35 | Schneller Reiter</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('cavalry')">ANWERBEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info">
+      <div class="mi-name">🧙 Magier</div>
+      <div class="mi-cost">80💰 + 6🌾/Tag</div>
+      <div class="mi-stat">HP: 500 | ATK: 500 | Flächenmagie</div>
+    </div>
+    <button class="mi-btn" onclick="recruitUnit('mage')">ANWERBEN</button>
+  </div>
+  <button class="modal-close" onclick="closeModal('modal-recruit')">SCHLIESSEN</button>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal" id="modal-shop">
+  <h2>HÄNDLER</h2>
+  <p class="flavor" id="shop-flavor">"Die besten Waren im Königreich!"</p>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🪵 Holz ×15</div><div class="mi-cost">18 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('wood',15,18)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">⚙️ Metall ×8</div><div class="mi-cost">22 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('metal',8,22)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🪨 Stein ×8</div><div class="mi-cost">15 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('stone',8,15)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">🌾 Nahrung ×20</div><div class="mi-cost">12 Gold</div></div>
+    <button class="mi-btn" onclick="buyRes('food',20,12)">KAUFEN</button>
+  </div>
+  <div class="modal-item">
+    <div class="mi-info"><div class="mi-name">❤️ Burg reparieren</div><div class="mi-cost">40 Gold → +50 HP</div></div>
+    <button class="mi-btn" onclick="buyRes('repair',50,40)">KAUFEN</button>
+  </div>
+  <button class="modal-close" onclick="closeModal('modal-shop')">SCHLIESSEN</button>
+</div>
+
+<!-- EQUIP MODAL -->
+<div class="modal" id="modal-equip">
+  <h2>AUSRÜSTUNG</h2>
+  <p class="flavor">"Wähle eine Verbesserung für deine Einheit!"</p>
+  <div id="equip-body"></div>
+  <button class="modal-close" onclick="closeModal('modal-equip')">SCHLIESSEN</button>
+</div>
+
+
+<!-- SCHMIEDE MODAL -->
+<div class="modal" id="modal-smithy" style="max-width:460px;">
+  <h2>⚒️ SCHMIEDE</h2>
+  <p class="flavor" id="smithy-flavor">"Ich schmiedle das beste Eisen im ganzen Land!"</p>
+  <div id="smithy-tabs" style="display:flex;gap:6px;margin-bottom:12px;">
+    <button class="mi-btn" onclick="smithyTab('schwerter')" id="stab-schwerter" style="flex:1;">⚔️ Schwerter</button>
+    <button class="mi-btn" onclick="smithyTab('schmied')" id="stab-schmied" style="flex:1;">👨‍🔧 Schmied</button>
+  </div>
+  <div id="smithy-body"></div>
+  <button class="modal-close" onclick="closeModal('modal-smithy')">SCHLIESSEN</button>
+</div>
+<canvas id="hp-canvas"></canvas>
+<div id="dragon-alert"><div class="da-title">🐉 ACHTUNG — DRACHE!</div><div class="da-sub" id="dragon-sub">Ein mächtiger Drache greift an!</div></div>
+<div id="banner"><div id="banner-title">⚔️</div><div id="banner-sub"></div></div>
+<div id="notif"></div>
+<div id="hint">WASD / PFEILE → Spieler bewegen<br>RECHTS-ZIEHEN → Kamera<br>SCROLLEN → Zoom | E → Interagieren</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+// ══════════════════════════════════════════════════
+//  RENDERER
+// ══════════════════════════════════════════════════
+const cv=document.getElementById('canvas');
+const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+ren.setPixelRatio(Math.min(devicePixelRatio,2));
+ren.setSize(innerWidth,innerHeight);
+ren.shadowMap.enabled=true; ren.shadowMap.type=THREE.PCFSoftShadowMap;
+ren.toneMapping=THREE.ACESFilmicToneMapping; ren.toneMappingExposure=0.88;
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080510);
+scene.fog=new THREE.FogExp2(0x080510,0.013);
+
+const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,300);
+cam.position.set(0,25,35); cam.lookAt(0,0,0);
+window.addEventListener('resize',()=>{
+  ren.setSize(innerWidth,innerHeight);
+  cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();
+});
+
+// ── Lights ──
+scene.add(new THREE.AmbientLight(0x18102a,1.3));
+const sun=new THREE.DirectionalLight(0xffe8cc,2);
+sun.position.set(-20,35,15); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+['left','right','top','bottom'].forEach((s,i)=>{sun.shadow.camera[s]=[-60,60,60,-60][i];});
+sun.shadow.camera.far=120; scene.add(sun);
+scene.add(Object.assign(new THREE.DirectionalLight(0x334466,0.5),{position:{set:()=>{}}}) );
+const fill=new THREE.DirectionalLight(0x334466,0.5);
+fill.position.set(15,8,-25); scene.add(fill);
+
+// ══════════════════════════════════════════════════
+//  MATERIALS
+// ══════════════════════════════════════════════════
+const lm=(c,e=0)=>new THREE.MeshLambertMaterial({color:c,emissive:e});
+const MAT={
+  grass:lm(0x1c380c), grass2:lm(0x243d0e), dirt:lm(0x3c2e18),
+  stone:lm(0x58503c), dstone:lm(0x3a3028), wood:lm(0x5c3d1e),
+  bark:lm(0x3d2810), leaves:lm(0x1a4a0a), leaves2:lm(0x285810),
+  ore:lm(0x6a6a7a,0x080810), gold_ore:lm(0xc8a020,0x201000),
+  roof:lm(0x1a1a30), flag_r:lm(0xcc2222), flag_b:lm(0x2244cc),
+  water:new THREE.MeshLambertMaterial({color:0x1a3a5a,transparent:true,opacity:0.65}),
+  // units
+  knight:lm(0x5566aa), knight_helm:lm(0x778899), knight_armor:lm(0x8899cc),
+  archer:lm(0x4a3a25), archer_hat:lm(0x3a2a15),
+  spear:lm(0x3a5a3a), spear_helm:lm(0x4a6a4a),
+  cavalry:lm(0x6633aa), horse:lm(0x7a5530),
+  mage:lm(0x1a1a5a), mage_robe:lm(0x2a2a8a), magic_glow:lm(0x4040ff,0x2020aa),
+  enemy:lm(0x8b1a1a), enemy2:lm(0x6a1414), enemy_helm:lm(0x444444),
+  merchant:lm(0x7a4a20), merchant_hat:lm(0x2a1a50),
+  cow:lm(0xe8dcc8), sheep:lm(0xe0e0e0),
+  catapult:lm(0x5c3d1e), cannon:lm(0x333333),
+  arrow:lm(0xc09050), fireball:lm(0xff6600,0x993300), cannonball:lm(0x222222),
+  proj:lm(0xff8800,0x552200),
+  dragon_body:lm(0x2a6a2a,0x051005), dragon_wing:lm(0x1a4a1a),
+  dragon_fire:new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:0.85}),
+  dragon_eye:new THREE.MeshBasicMaterial({color:0xff2200}),
+  dragon_belly:lm(0x4a8a3a,0x0a150a),
+  dragon_red:lm(0x8b1a00,0x1a0000),
+  smithy_stone:lm(0x5a4a38), smithy_anvil:lm(0x222222), smithy_fire:lm(0xff6600,0x331100),
+  sword_wood:lm(0x7a5020), sword_stone:lm(0x888880), sword_iron:lm(0x9090aa,0x080810),
+  sword_diamond:lm(0x50d0ff,0x0a1a20), sword_nether:lm(0xcc2244,0x220010),
+};
+
+// ══════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════
+const B=(w,h,d,m)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+const CY=(rt,rb,h,s,m)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s),m);
+const CN=(r,h,s,m)=>new THREE.Mesh(new THREE.ConeGeometry(r,h,s),m);
+const SP=(r,s,m)=>new THREE.Mesh(new THREE.SphereGeometry(r,s,s),m);
+function place(mesh,x,y,z,cast=true){
+  mesh.position.set(x,y,z); mesh.castShadow=cast; mesh.receiveShadow=true;
+  scene.add(mesh); return mesh;
+}
+function addTo(group,mesh,x,y,z){mesh.position.set(x,y,z);mesh.castShadow=true;group.add(mesh);return mesh;}
+function rnd(a,b){return a+Math.random()*(b-a);}
+function d2(a,b){const dx=a.x-b.x,dz=(a.z||0)-(b.z||0);return Math.sqrt(dx*dx+dz*dz);}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// ══════════════════════════════════════════════════
+//  WORLD
+// ══════════════════════════════════════════════════
+// Ground
+const gg=new THREE.PlaneGeometry(140,140,50,50);
+const gp=gg.attributes.position;
+for(let i=0;i<gp.count;i++){
+  const x=gp.getX(i),z=gp.getZ(i),d=Math.sqrt(x*x+z*z);
+  if(d>8) gp.setY(i,(Math.random()-0.5)*0.6+Math.sin(x*0.18)*0.3+Math.cos(z*0.14)*0.25);
+}
+gg.computeVertexNormals();
+place(new THREE.Mesh(gg,MAT.grass),0,0,0,false).rotation.x=-Math.PI/2;
+
+// Dirt base around center
+place(new THREE.Mesh(new THREE.CircleGeometry(10,32),MAT.dirt),0,0.01,0,false).rotation.x=-Math.PI/2;
+
+// Path
+const pm=new THREE.Mesh(new THREE.PlaneGeometry(3.5,70),MAT.dirt);
+pm.rotation.x=-Math.PI/2; pm.position.set(0,0.02,15); scene.add(pm);
+
+// Lake
+place(new THREE.Mesh(new THREE.PlaneGeometry(16,12),MAT.water),-35,0.08,20,false).rotation.x=-Math.PI/2;
+
+// Stars
+const sv=[];
+for(let i=0;i<900;i++) sv.push(rnd(-160,160),30+rnd(0,100),rnd(-160,160));
+const sg=new THREE.BufferGeometry();
+sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
+scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.22})));
+
+// ══════════════════════════════════════════════════
+//  BUILD GRID
+// ══════════════════════════════════════════════════
+const CELL=2.5;
+const cells={};
+function gk(x,z){return`${x},${z}`;}
+function w2g(wx,wz){return{gx:Math.round(wx/CELL),gz:Math.round(wz/CELL)};}
+function g2w(gx,gz){return{wx:gx*CELL,wz:gz*CELL};}
+// Mark center
+for(let x=-1;x<=1;x++) for(let z=-1;z<=1;z++) cells[gk(x,z)]={type:'center'};
+
+// Ghost grid
+for(let x=-9;x<=9;x++) for(let z=-9;z<=9;z++){
+  if((x+z)%2) continue;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(CELL-0.1,CELL-0.1),
+    new THREE.MeshBasicMaterial({color:0x182210,transparent:true,opacity:0.2}));
+  m.rotation.x=-Math.PI/2; m.position.set(x*CELL,0.01,z*CELL); scene.add(m);
+}
+
+// ══════════════════════════════════════════════════
+//  NATURE
+// ══════════════════════════════════════════════════
+const trees=[],ores=[];
+function makeTree(x,z){
+  const h=rnd(3.5,5.5);
+  const g=new THREE.Group();
+  const tr=CY(0.25,0.38,h,7,MAT.bark); tr.position.y=h/2; g.add(tr);
+  const lr=rnd(1.6,2.3),lh=rnd(2.4,3.2);
+  const l1=CN(lr,lh,8,Math.random()>0.5?MAT.leaves:MAT.leaves2); l1.position.y=h+lh*0.42; g.add(l1);
+  const l2=CN(lr*0.65,lh*0.75,8,MAT.leaves2); l2.position.y=h+lh*0.88; g.add(l2);
+  g.position.set(x,0,z); g.castShadow=true; scene.add(g);
+  trees.push({g,x,z,hp:3,wobble:rnd(0,Math.PI*2)});
+}
+function makeOre(x,z,type){
+  const s=rnd(0.6,1.0);
+  const mat=type==='metal'?MAT.ore:type==='gold_ore'?MAT.gold_ore:MAT.stone;
+  const g=new THREE.Group();
+  const m1=SP(s,5,mat); m1.position.y=s*0.5; g.add(m1);
+  const m2=SP(s*0.68,5,mat); m2.position.set(rnd(-0.4,0.4),s*0.28,rnd(-0.4,0.4)); g.add(m2);
+  g.position.set(x,0,z); scene.add(g);
+  ores.push({g,x,z,type,hp:2});
+}
+
+for(let i=0;i<65;i++){
+  let x,z,t=0;
+  do{x=rnd(-60,60);z=rnd(-60,60);t++;}
+  while((Math.abs(x)<14&&Math.abs(z)<14)||t>30);
+  makeTree(x,z);
+}
+for(let i=0;i<18;i++){let x,z,t=0;do{x=rnd(-55,55);z=rnd(-55,55);t++;}while((Math.abs(x)<16&&Math.abs(z)<16)||t>25);makeOre(x,z,'metal');}
+for(let i=0;i<10;i++){let x,z,t=0;do{x=rnd(-55,55);z=rnd(-55,55);t++;}while(t>20);makeOre(x,z,'stone_ore');}
+for(let i=0;i<6;i++){let x,z,t=0;do{x=rnd(-50,50);z=rnd(-50,50);t++;}while(t>20);makeOre(x,z,'gold_ore');}
+
+// ══════════════════════════════════════════════════
+//  ANIMALS & MERCHANTS
+// ══════════════════════════════════════════════════
+const animals=[],mercs=[];
+function makeCow(x,z){
+  const g=new THREE.Group();
+  const bd=B(1.4,0.9,0.72,MAT.cow); bd.position.y=0.82; g.add(bd);
+  const hd=B(0.55,0.56,0.66,MAT.cow); hd.position.set(0.76,1.22,0); g.add(hd);
+  [[-0.35,-0.28],[-0.35,0.28],[0.35,-0.28],[0.35,0.28]].forEach(([lx,lz])=>{
+    const l=B(0.2,0.56,0.2,MAT.cow); l.position.set(lx,0.29,lz); g.add(l);
+  });
+  g.position.set(x,0,z); scene.add(g);
+  animals.push({g,x,z,type:'cow',dir:rnd(0,Math.PI*2),timer:rnd(2,5),gold:8,wobble:0});
+}
+function makeSheep(x,z){
+  const g=new THREE.Group();
+  const bd=B(1.1,0.85,0.7,MAT.sheep); bd.position.y=0.75; g.add(bd);
+  const hd=B(0.4,0.4,0.4,MAT.cow); hd.position.set(0.65,1.1,0); g.add(hd);
+  [[-0.28,-0.2],[-0.28,0.2],[0.28,-0.2],[0.28,0.2]].forEach(([lx,lz])=>{
+    const l=B(0.18,0.5,0.18,MAT.cow); l.position.set(lx,0.26,lz); g.add(l);
+  });
+  g.position.set(x,0,z); scene.add(g);
+  animals.push({g,x,z,type:'sheep',dir:rnd(0,Math.PI*2),timer:rnd(2,5),gold:5,wobble:0});
+}
+function makeMerchant(x,z,flavor){
+  const g=new THREE.Group();
+  const body=CY(0.32,0.38,1.7,8,MAT.merchant); body.position.y=0.85; g.add(body);
+  const head=SP(0.32,7,lm(0xc8a07a)); head.position.y=1.98; g.add(head);
+  const hat=CY(0.13,0.4,0.58,8,MAT.merchant_hat); hat.position.y=2.42; g.add(hat);
+  const brim=CY(0.52,0.52,0.08,8,MAT.merchant_hat); brim.position.y=2.19; g.add(brim);
+  const cart=B(1.9,0.65,1.1,lm(0x8a5a20)); cart.position.set(1.5,0.42,0); g.add(cart);
+  const goods=[['🍎',0.2],['⚙️',-0.4]];
+  g.position.set(x,0,z); scene.add(g);
+  const lp=new THREE.PointLight(0xffaa44,1.6,7); lp.position.set(x,3.5,z); scene.add(lp);
+  mercs.push({g,x,z,lp,flavor,bob:0});
+}
+for(let i=0;i<6;i++) makeCow(rnd(-45,45),rnd(-45,45));
+for(let i=0;i<8;i++) makeSheep(rnd(-45,45),rnd(-45,45));
+makeMerchant(20,6,"\"Willkommen, Ritter! Beste Preise!\"");
+makeMerchant(-22,-14,"\"Seltene Waren aus aller Welt!\"");
+makeMerchant(10,-28,"\"Ein gutes Geschäft für uns beide!\"");
+
+// ══════════════════════════════════════════════════
+//  PLAYER
+// ══════════════════════════════════════════════════
+function makePlayer(){
+  const g=new THREE.Group();
+  const body=B(0.65,0.95,0.55,MAT.knight); body.position.y=0.8; g.add(body);
+  // Armor plates
+  const chest=B(0.68,0.5,0.58,MAT.knight_armor); chest.position.y=0.95; g.add(chest);
+  const head=SP(0.32,8,MAT.knight_helm); head.position.y=1.65; g.add(head);
+  const visor=B(0.33,0.18,0.36,lm(0x222233)); visor.position.set(0,1.64,0.16); g.add(visor);
+  [[-0.18,0],[0.18,0]].forEach(([lx])=>{
+    const l=B(0.24,0.55,0.26,MAT.knight); l.position.set(lx,0.29,0); g.add(l);
+  });
+  // Cape
+  const cape=B(0.6,0.7,0.1,MAT.flag_r); cape.position.set(0,0.85,-0.25); g.add(cape);
+  // Sword
+  const blade=B(0.07,0.9,0.07,lm(0xbbbbcc)); blade.position.set(0.45,1.1,0); g.add(blade);
+  const guard=B(0.35,0.08,0.08,lm(0xc8a020)); guard.position.set(0.45,0.7,0); g.add(guard);
+  // Shield
+  const shield=B(0.08,0.55,0.45,lm(0x334488)); shield.position.set(-0.42,0.9,0); g.add(shield);
+  g.position.set(0,0,8); scene.add(g);
+  return {g,x:0,z:8,speed:0.13,keys:{w:0,s:0,a:0,d:0},swordSwing:0};
+}
+const player=makePlayer();
+
+// ══════════════════════════════════════════════════
+//  PLAYER UNITS
+// ══════════════════════════════════════════════════
+const playerUnits=[];
+let selectedUnit=null;
+
+const UNIT_DEFS={
+  knight:{name:'Ritter',icon:'⚔️',hp:300,atk:15,atkMin:10,atkMax:20,spd:0.09,range:2.5,color:0x5566aa,mat:MAT.knight,cost:{gold:15,food:2}},
+  archer:{name:'Bogenschütze',icon:'🏹',hp:150,atk:25,atkMin:20,atkMax:30,spd:0.055,range:18,color:0x4a3a25,mat:MAT.archer,cost:{gold:20,food:3}},
+  spear:{name:'Speerkämpfer',icon:'🗡️',hp:90,atk:20,spd:0.06,range:3,color:0x3a5a3a,mat:MAT.spear,cost:{gold:25,food:4}},
+  cavalry:{name:'Kavallerist',icon:'🐴',hp:150,atk:35,spd:0.12,range:2.5,color:0x6633aa,mat:MAT.cavalry,cost:{gold:50,food:8}},
+  mage:{name:'Magier',icon:'🧙',hp:500,atk:500,atkMin:450,atkMax:550,spd:0.05,range:14,color:0x2a2a8a,mat:MAT.mage,cost:{gold:80,food:6}},
+};
+
+const EQUIP={
+  sword:{name:'Stahlschwert',bonus:{atk:10},cost:25,icon:'⚔️',for:['knight','spear']},
+  bow:{name:'Langbogen',bonus:{range:5,atk:8},cost:20,icon:'🏹',for:['archer']},
+  spear_up:{name:'Eisenspeer',bonus:{atk:12},cost:22,icon:'🗡️',for:['spear']},
+  armor:{name:'Plattenpanzer',bonus:{hp:40},cost:35,icon:'🛡️',for:['knight','cavalry','spear']},
+  robe:{name:'Magiermantel',bonus:{atk:20},cost:45,icon:'✨',for:['mage']},
+  horse_armor:{name:'Pferdepanzer',bonus:{hp:60},cost:40,icon:'🐴',for:['cavalry']},
+};
+
+function makeUnitMesh(type){
+  const g=new THREE.Group();
+  const def=UNIT_DEFS[type];
+  if(type==='knight'){
+    addTo(g,B(0.6,0.9,0.55,MAT.knight),0,0.8,0);
+    addTo(g,B(0.62,0.5,0.58,MAT.knight_armor),0,0.95,0);
+    addTo(g,SP(0.3,8,MAT.knight_helm),0,1.6,0);
+    addTo(g,B(0.07,0.8,0.07,lm(0xbbbbcc)),0.42,1.05,0);
+    addTo(g,B(0.08,0.52,0.4,lm(0x334488)),-0.38,0.88,0);
+    [[-.16,0],[.16,0]].forEach(([lx])=>{addTo(g,B(0.22,0.52,0.24,MAT.knight),lx,0.28,0);});
+  } else if(type==='archer'){
+    addTo(g,B(0.55,0.85,0.5,MAT.archer),0,0.77,0);
+    addTo(g,SP(0.28,7,lm(0xc8a07a)),0,1.56,0);
+    addTo(g,B(0.52,0.22,0.52,MAT.archer_hat),0,1.82,0);
+    addTo(g,B(0.05,0.75,0.05,lm(0x5c3d1e)),0.4,1.18,0.15); // bow
+    addTo(g,CY(0.02,0.02,0.65,4,MAT.arrow),0.4,0.95,-0.05);
+    [[-.15,0],[.15,0]].forEach(([lx])=>{addTo(g,B(0.2,0.5,0.22,MAT.archer),lx,0.27,0);});
+  } else if(type==='spear'){
+    addTo(g,B(0.58,0.9,0.52,MAT.spear),0,0.8,0);
+    addTo(g,SP(0.29,8,MAT.spear_helm),0,1.62,0);
+    addTo(g,B(0.06,1.4,0.06,lm(0x5c3d1e)),0.44,1.3,0); // spear shaft
+    addTo(g,CN(0.08,0.35,4,lm(0xaaaacc)),0.44,2.05,0); // spear tip
+    [[-.16,0],[.16,0]].forEach(([lx])=>{addTo(g,B(0.22,0.52,0.24,MAT.spear),lx,0.28,0);});
+  } else if(type==='cavalry'){
+    // Horse
+    addTo(g,B(1.5,0.95,0.7,MAT.horse),0,0.88,0);
+    addTo(g,B(0.55,0.6,0.66,MAT.horse),0.85,1.3,0);
+    [[-.45,-.28],[-.45,.28],[.45,-.28],[.45,.28]].forEach(([lx,lz])=>{addTo(g,B(0.22,0.9,0.22,MAT.horse),lx,0.46,lz);});
+    // Rider
+    addTo(g,B(0.55,0.8,0.5,MAT.cavalry),0,2.05,0);
+    addTo(g,SP(0.28,7,MAT.knight_helm),0,2.78,0);
+    addTo(g,B(0.06,0.85,0.06,lm(0xbbbbcc)),0.42,2.2,0);
+  } else if(type==='mage'){
+    addTo(g,CY(0.3,0.36,1.5,8,MAT.mage_robe),0,0.75,0);
+    addTo(g,SP(0.3,8,lm(0x8a7aaa)),0,1.62,0);
+    addTo(g,CY(0.12,0.36,0.55,8,MAT.mage_robe),0,2.08,0); // hat
+    addTo(g,B(0.05,1.1,0.05,lm(0x6a5a3a)),0.42,1.25,0); // staff
+    const orb=SP(0.14,6,MAT.magic_glow); orb.position.set(0.42,1.85,0); g.add(orb);
+    const gl=new THREE.PointLight(0x4444ff,1.2,4); gl.position.set(0.42,1.85,0); g.add(gl);
+  }
+  return g;
+}
+
+function recruitUnit(type){
+  const def=UNIT_DEFS[type];
+  if(res.gold<def.cost.gold){notify('Nicht genug Gold!');return;}
+  if(res.food<def.cost.food){notify('Nicht genug Nahrung!');return;}
+  res.gold-=def.cost.gold; res.food-=def.cost.food;
+  updateHUD();
+
+  const g=makeUnitMesh(type);
+  // Spawn near player
+  const angle=Math.random()*Math.PI*2, r=3+Math.random()*2;
+  const ux=player.x+Math.cos(angle)*r;
+  const uz=player.z+Math.sin(angle)*r;
+  g.position.set(ux,0,uz);
+  scene.add(g);
+
+  const unit={
+    g,type,x:ux,z:uz,
+    hp:def.hp,maxHp:def.hp,atk:def.atk,spd:def.spd,range:def.range,
+    name:def.name,icon:def.icon,
+    state:'ruhig', target:null, cooldown:0, wobble:Math.random()*Math.PI*2,
+    equip:[],
+  };
+  playerUnits.push(unit);
+  notify(`${def.icon} ${def.name} wurde erfolgreich rekrutiert!`);
+  updateUnitList();
+  closeModal('modal-recruit');
+}
+window.recruitUnit=recruitUnit;
+
+function updateUnitList(){
+  const el=document.getElementById('unit-list');
+  el.innerHTML='';
+  playerUnits.forEach((u,i)=>{
+    if(u.dead) return;
+    const d=document.createElement('div');
+    d.className='unit-chip'+(selectedUnit===u?' selected':'');
+    d.innerHTML=`${u.icon} ${u.name} <span class="uhp">HP:${Math.floor(u.hp)}</span>`;
+    d.onclick=()=>{selectedUnit=(selectedUnit===u)?null:u; updateUnitList();};
+    el.appendChild(d);
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  BUILDINGS
+// ══════════════════════════════════════════════════
+const COSTS={
+  wall:{wood:5,stone:10}, tower:{wood:15,metal:12,stone:8},
+  gate:{wood:12,stone:10,metal:8}, keep:{wood:30,metal:20,stone:20},
+  barracks:{wood:18,metal:12,stone:5}, farm:{wood:10,stone:4},
+  market:{wood:20,metal:10,stone:8},
+  catapult:{wood:18,metal:15}, cannon:{wood:10,metal:25},
+  smithy:{wood:15,metal:20,stone:10}, crossbow:{wood:14,metal:16,stone:8},
+};
+
+function canAfford(type){
+  const c=COSTS[type];
+  return c && Object.entries(c).every(([k,v])=>res[k]>=v);
+}
+function spend(type){
+  Object.entries(COSTS[type]).forEach(([k,v])=>res[k]-=v);
+  updateHUD();
+}
+
+function buildAt(gx,gz){
+  if(!buildMode||buildMode==='move') return;
+  const key=gk(gx,gz);
+  if(cells[key]){notify('Dieses Feld ist bereits belegt!');return;}
+  if(Math.abs(gx)>9||Math.abs(gz)>9){notify('Zu weit vom Zentrum entfernt!');return;}
+  if(!canAfford(buildMode)){notify('Nicht genug Ressourcen zum Bauen!');return;}
+  spend(buildMode);
+  const{wx,wz}=g2w(gx,gz);
+  const meshes=[];
+  const C=CELL;
+
+  if(buildMode==='wall'){
+    meshes.push(place(B(C,2.6,C,MAT.stone),wx,1.3,wz));
+    [-0.75,0,0.75].forEach(off=>{
+      meshes.push(place(B(0.55,0.7,0.55,MAT.dstone),wx+off,2.95,wz));
+      meshes.push(place(B(0.55,0.7,0.55,MAT.dstone),wx,2.95,wz+off));
+    });
+  } else if(buildMode==='tower'){
+    meshes.push(place(B(C+0.2,7,C+0.2,MAT.stone),wx,3.5,wz));
+    meshes.push(place(B(C+0.6,0.6,C+0.6,MAT.dstone),wx,7.3,wz));
+    meshes.push(place(CN(C*0.82,2.4,8,MAT.roof),wx,8.7,wz));
+    [-0.85,0,0.85].forEach(off=>{
+      meshes.push(place(B(0.6,0.75,0.6,MAT.dstone),wx+off,7.85,wz+C*0.5));
+      meshes.push(place(B(0.6,0.75,0.6,MAT.dstone),wx+off,7.85,wz-C*0.5));
+    });
+    // Archer in tower
+    const ab=B(0.48,0.9,0.45,MAT.archer); ab.position.set(wx,8.1,wz); ab.castShadow=true; scene.add(ab);
+    meshes.push(ab);
+    archerTowers.push({wx,wz,cooldown:0});
+  } else if(buildMode==='gate'){
+    meshes.push(place(B(C*0.8,3.5,C,MAT.stone),wx-C*0.6,1.75,wz));
+    meshes.push(place(B(C*0.8,3.5,C,MAT.stone),wx+C*0.6,1.75,wz));
+    meshes.push(place(B(C*2.2,0.7,C,MAT.dstone),wx,3.7,wz));
+    const portcullis=B(C*0.85,2.8,0.2,lm(0x2a1e0e,0)); portcullis.position.set(wx,1.55,wz); scene.add(portcullis); meshes.push(portcullis);
+  } else if(buildMode==='keep'){
+    meshes.push(place(B(C*1.6,9,C*1.6,MAT.stone),wx,4.5,wz));
+    meshes.push(place(B(C*2,0.65,C*2,MAT.dstone),wx,9.3,wz));
+    meshes.push(place(CN(C*1.1,3.2,8,MAT.roof),wx,11.2,wz));
+    [[-1.1,-1.1],[-1.1,1.1],[1.1,-1.1],[1.1,1.1]].forEach(([ox,oz])=>{
+      meshes.push(place(B(0.6,0.9,0.6,MAT.dstone),wx+ox*C,9.85,wz+oz*C));
+    });
+    const pole=place(CY(0.07,0.07,2.5,4,MAT.bark),wx,12.45,wz,false);
+    const flag=place(B(0.9,0.5,0.06,MAT.flag_r),wx+0.5,13.25,wz);
+    meshes.push(pole,flag);
+    maxHP+=50; castleHP+=50; updateHUD();
+  } else if(buildMode==='barracks'){
+    meshes.push(place(B(C*1.5,2.8,C*1.5,MAT.wood),wx,1.4,wz));
+    meshes.push(place(B(C*1.7,0.25,C*1.7,MAT.bark),wx,2.9,wz));
+    meshes.push(place(CN(C*0.9,1.8,4,MAT.bark),wx,3.9,wz));
+    const sign=place(B(0.7,0.4,0.08,lm(0x5c3d1e)),wx,2.5,wz+C*0.77);
+    meshes.push(sign);
+    barracks.push({wx,wz});
+  } else if(buildMode==='farm'){
+    meshes.push(place(B(C*1.8,0.12,C*1.8,lm(0x4a6a1e)),wx,0.06,wz,false));
+    meshes.push(place(B(C*0.3,1.8,C*0.3,MAT.bark),wx-C*0.5,0.9,wz+C*0.5));
+    meshes.push(place(CN(C*0.2,0.5,4,lm(0xdd4422)),wx-C*0.5,1.95,wz+C*0.5)); // farmhouse roof
+    farms.push({wx,wz,timer:0});
+    // Wheat rows
+    for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++){
+      if((i+j)%2) continue;
+      const w=place(CY(0.04,0.04,0.55,4,lm(0xccaa20)),wx+i*0.6,0.28,wz+j*0.6,false);
+      meshes.push(w);
+    }
+  } else if(buildMode==='market'){
+    meshes.push(place(B(C*1.6,2.2,C*1.4,lm(0x7a5a30)),wx,1.1,wz));
+    meshes.push(place(B(C*1.85,0.2,C*1.65,lm(0xcc4422)),wx,2.3,wz)); // red roof
+    meshes.push(place(CN(C*0.3,0.8,4,lm(0xcc4422)),wx,2.8,wz));
+    // Stalls
+    [-0.8,0.8].forEach(ox=>{
+      meshes.push(place(B(0.55,0.8,C*0.7,lm(0x8a6030)),wx+ox,0.6,wz));
+    });
+    markets.push({wx,wz,timer:0});
+  } else if(buildMode==='catapult'){
+    const cg=new THREE.Group();
+    addTo(cg,B(1.2,0.3,0.6,MAT.catapult),0,0.3,0);  // base
+    addTo(cg,CY(0.1,0.1,1.8,6,MAT.catapult),0,1.2,0); // arm
+    addTo(cg,SP(0.28,6,lm(0x5c3d1e)),0,2.2,0); // sling
+    addTo(cg,B(0.25,0.25,0.25,lm(0x333333)),0,2.2,0); // rock
+    cg.position.set(wx,0,wz); scene.add(cg); meshes.push(cg);
+    catapults.push({g:cg,wx,wz,cooldown:0,rotY:0});
+  } else if(buildMode==='cannon'){
+    const cg=new THREE.Group();
+    addTo(cg,B(1.0,0.35,0.5,MAT.dstone),0,0.28,0);
+    addTo(cg,CY(0.22,0.28,1.3,8,MAT.cannon),-0.2,0.72,0).rotation.z=Math.PI/2.2;
+    addTo(cg,CY(0.15,0.15,0.22,8,MAT.cannon),-0.78,0.65,0);
+    addTo(cg,B(0.18,0.4,0.5,MAT.wood),-0.1,0.12,-0.3);
+    addTo(cg,B(0.18,0.4,0.5,MAT.wood),-0.1,0.12,0.3);
+    cg.position.set(wx,0,wz); scene.add(cg); meshes.push(cg);
+    cannons.push({g:cg,wx,wz,cooldown:0});
+  } else if(buildMode==='crossbow'){
+    // Riesenarmbrust — massives Holzgerüst
+    const xg=new THREE.Group();
+    // Rahmen
+    addTo(xg,B(2.2,0.3,1.0,MAT.catapult),0,0.25,0); // Sockel
+    addTo(xg,B(0.18,1.8,0.18,MAT.catapult),-0.9,1.15,0); // linker Ständer
+    addTo(xg,B(0.18,1.8,0.18,MAT.catapult),0.9,1.15,0);  // rechter Ständer
+    addTo(xg,B(0.18,1.8,0.18,MAT.bark),0,1.0,0); // Schiene/Schaft
+    // Bogen-Arme
+    addTo(xg,B(0.12,0.12,2.4,MAT.bark),0,2.0,0); // Bogenstab quer
+    addTo(xg,CY(0.06,0.06,1.2,5,MAT.arrow),0,1.1,0); // Bolzen in Schiene
+    // Sehne (zwei schräge Stäbe)
+    const s1=addTo(xg,B(0.06,0.06,1.3,lm(0x888888)),0,2.0,0.62);
+    s1.rotation.z=0.3;
+    const s2=addTo(xg,B(0.06,0.06,1.3,lm(0x888888)),0,2.0,-0.62);
+    s2.rotation.z=-0.3;
+    // Rad zum Spannen
+    addTo(xg,CY(0.35,0.35,0.1,10,MAT.catapult),-0.9,0.55,0).rotation.z=Math.PI/2;
+    xg.position.set(wx,0,wz); scene.add(xg); meshes.push(xg);
+    crossbows.push({g:xg,wx,wz,cooldown:0,hp:CROSSBOW_HP,maxHp:CROSSBOW_HP,dead:false});
+  } else if(buildMode==='smithy'){
+    // Forge building
+    const sg2=new THREE.Group();
+    // Stone base
+    const sbase=B(CELL*1.7,2.5,CELL*1.7,MAT.smithy_stone); sbase.position.y=1.25; sg2.add(sbase);
+    // Roof  
+    const sroof=CN(CELL,2,4,MAT.bark); sroof.position.y=3.6; sg2.add(sroof);
+    // Chimney
+    const schim=CY(0.25,0.25,2.2,6,MAT.smithy_stone); schim.position.set(0.6,3.2,0.6); sg2.add(schim);
+    // Anvil
+    const sanvil=B(0.7,0.3,0.4,MAT.smithy_anvil); sanvil.position.set(0.3,2.65,0); sg2.add(sanvil);
+    const sanvil2=B(0.4,0.5,0.3,MAT.smithy_anvil); sanvil2.position.set(0.3,2.4,0); sg2.add(sanvil2);
+    // Forge fire glow
+    const sfire=new THREE.PointLight(0xff6600,2,5); sfire.position.set(-0.4,2.5,0); sg2.add(sfire);
+    sg2.position.set(wx,0,wz); scene.add(sg2); meshes.push(sg2);
+    smithies.push({wx,wz,light:sfire,g:sg2});
+  }
+  cells[key]={type:buildMode,meshes};
+  notify(`✅ ${({'wall':'Mauer','tower':'Turm','gate':'Tor','keep':'Burg','barracks':'Kaserne','farm':'Farm','market':'Markt','catapult':'Katapult','cannon':'Kanone','smithy':'Schmiede','crossbow':'Riesenarmbrust'}[buildMode]||buildMode.toUpperCase())} erfolgreich erbaut!`);
+  refreshSidePanel();
+}
+
+// ══════════════════════════════════════════════════
+//  BUILDING REGISTRIES
+// ══════════════════════════════════════════════════
+const archerTowers=[], barracks=[], farms=[], markets=[], catapults=[], cannons=[], smithies=[], crossbows=[];
+// Crossbow buildings have HP and can be destroyed
+const CROSSBOW_HP = 600;
+const playerSwords={}; // unitIndex -> swordType
+let hasSmith=false, smithCooldown=0;
+
+// ══════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════
+const res={wood:50,metal:30,stone:20,food:40,gold:120};
+let castleHP=100,maxHP=100;
+let dayTime=0.5, dayNum=1, isNight=false;
+let waveNum=1, waveActive=false;
+const enemies=[], projectiles=[], dragons=[];
+let buildMode=null, gameOver=false;
+let notifTimer=null;
+
+function updateHUD(){
+  ['wood','metal','stone','food','gold'].forEach(k=>{
+    document.getElementById('r-'+k).textContent=res[k];
+  });
+  document.getElementById('r-pop').textContent=playerUnits.filter(u=>!u.dead).length;
+  document.getElementById('r-hp')&&(document.getElementById('r-hp').textContent=Math.max(0,Math.floor(castleHP)));
+}
+
+function notify(msg,dur=2300){
+  const el=document.getElementById('notif');
+  el.textContent=msg; el.style.opacity='1';
+  if(notifTimer) clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>el.style.opacity='0',dur);
+}
+
+function showBanner(title,sub){
+  document.getElementById('banner-title').textContent=title;
+  document.getElementById('banner-sub').textContent=sub;
+  const b=document.getElementById('banner'); b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),2800);
+}
+
+// ══════════════════════════════════════════════════
+//  SIDE PANEL
+// ══════════════════════════════════════════════════
+let activeTab='build';
+window.showTab=function(tab){
+  activeTab=tab;
+  document.querySelectorAll('.ptab').forEach((t,i)=>{
+    t.classList.toggle('active',['build','units','info'][i]===tab);
+  });
+  refreshSidePanel();
+};
+
+function refreshSidePanel(){
+  const el=document.getElementById('panel-body');
+  if(activeTab==='build'){
+    const built=Object.values(cells).filter(c=>c.type&&c.type!=='center');
+    const farms_n=built.filter(c=>c.type==='farm').length;
+    const towers=built.filter(c=>c.type==='tower').length;
+    el.innerHTML=`
+    <div class="panel-section">
+      <h4>KÖNIGREICH STATUS</h4>
+      <div class="info-box" id="info-box">
+        <h5>ÜBERSICHT</h5>
+        <p>
+          Burg-HP: <span class="hi">${Math.floor(castleHP)}/${maxHP}</span><br>
+          Gebäude: <span class="hi">${built.length}</span><br>
+          Türme: <span class="hi">${towers}</span><br>
+          Farmen: <span class="hi">${farms_n}</span><br>
+          Einheiten: <span class="hi">${playerUnits.filter(u=>!u.dead).length}</span><br>
+          Welle: <span class="hi">${waveNum}</span>
+        </p>
+      </div>
+    </div>
+    <div class="panel-section">
+      <h4>TIPP</h4>
+      <p style="font-family:'Crimson Text',serif;font-size:12px;color:var(--text-dim);line-height:1.6;">
+        Baue Farmen für Nahrung und Märkte für Gold. Stelle Mauern um deine Burg, Türme in die Ecken. Rekrutiere Ritter und Bogenschützen!
+      </p>
+    </div>`;
+  } else if(activeTab==='units'){
+    let html=`<div class="panel-section"><h4>DEINE EINHEITEN</h4>`;
+    if(playerUnits.filter(u=>!u.dead).length===0){
+      html+=`<p style="font-family:'Crimson Text',serif;font-size:12px;color:var(--text-dim);">Noch keine Einheiten — klicke auf REKRUTIEREN!</p>`;
+    }
+    playerUnits.filter(u=>!u.dead).forEach((u,i)=>{
+      html+=`<div class="card${selectedUnit===u?' active':''}" onclick="selectUnit(${i})">
+        <div class="card-head"><span class="card-name">${u.icon} ${u.name}</span><span class="card-icon"></span></div>
+        <div class="card-stat">
+          <span class="stat-pill">HP ${Math.floor(u.hp)}/${u.maxHp}</span>
+          <span class="stat-pill">ATK ${u.atk}</span>
+          <span class="stat-pill">${u.state}</span>
+        </div>
+        <div class="card-cost" style="margin-top:5px;">
+          <button class="mi-btn" style="font-size:8px;padding:3px 8px;" onclick="event.stopPropagation();openEquip(${i})">🛡️ AUSRÜSTEN</button>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+    el.innerHTML=html;
+  } else {
+    el.innerHTML=`<div class="panel-section">
+      <h4>STEUERUNG</h4>
+      <p style="font-family:'Crimson Text',serif;font-size:12px;color:var(--text-dim);line-height:1.9;">
+        <span style="color:var(--gold)">WASD / Pfeile</span> → Spieler bewegen<br>
+        <span style="color:var(--gold)">Rechts-Ziehen</span> → Kamera drehen<br>
+        <span style="color:var(--gold)">Scroll</span> → Zoom<br>
+        <span style="color:var(--gold)">E</span> → Interaktion<br>
+        <span style="color:var(--gold)">Linksklick Karte</span> → Einheit hinschicken<br>
+        <span style="color:var(--gold)">Linksklick</span> → Bauen platzieren
+      </p>
+    </div>
+    <div class="panel-section">
+      <h4>GEBÄUDE-EFFEKTE</h4>
+      <p style="font-family:'Crimson Text',serif;font-size:11px;color:var(--text-dim);line-height:1.9;">
+        🌾 Farm → +3 Nahrung/Tag<br>
+        🏪 Markt → +10 Gold/Tag<br>
+        🗼 Turm → Bogenschütze drin<br>
+        🏰 Burg → +50 Max-HP<br>
+        🛡️ Kaserne → Schnellere Rekrutierung
+      </p>
+    </div>`;
+  }
+}
+refreshSidePanel();
+
+window.selectUnit=function(i){
+  selectedUnit=playerUnits[i];
+  refreshSidePanel(); updateUnitList();
+};
+
+window.openEquip=function(i){
+  const u=playerUnits[i];
+  if(!u) return;
+  const el=document.getElementById('equip-body');
+  let html=`<p style="font-family:'Crimson Text',serif;font-size:12px;color:var(--text-dim);margin-bottom:12px;">Einheit: <strong style="color:var(--gold)">${u.icon} ${u.name}</strong></p>`;
+  Object.entries(EQUIP).forEach(([key,eq])=>{
+    if(!eq.for.includes(u.type)) return;
+    const owned=u.equip.includes(key);
+    html+=`<div class="modal-item">
+      <div class="mi-info">
+        <div class="mi-name">${eq.icon} ${eq.name} ${owned?'✅':''}</div>
+        <div class="mi-cost">${eq.cost} Gold</div>
+        <div class="mi-stat">+${Object.entries(eq.bonus).map(([k,v])=>`${v} ${k==='atk'?'ATK':k==='hp'?'HP':k==='range'?'Reichweite':k}`).join(', ')}</div>
+      </div>
+      ${owned?'<span style="font-size:10px;color:var(--green)">✅ Ausgerüstet</span>':`<button class="mi-btn" onclick="equipItem(${i},'${key}')">KAUFEN</button>`}
+    </div>`;
+  });
+  el.innerHTML=html;
+  document.getElementById('modal-equip').classList.add('show');
+};
+
+window.equipItem=function(ui,key){
+  const u=playerUnits[ui];
+  const eq=EQUIP[key];
+  if(!u||!eq) return;
+  if(res.gold<eq.cost){notify('Nicht genug Gold!');return;}
+  if(u.equip.includes(key)){notify('Diese Ausrüstung trägt die Einheit bereits!'); return;}
+  res.gold-=eq.cost; updateHUD();
+  u.equip.push(key);
+  if(eq.bonus.hp){u.hp+=eq.bonus.hp;u.maxHp+=eq.bonus.hp;}
+  if(eq.bonus.atk) u.atk+=eq.bonus.atk;
+  if(eq.bonus.range) u.range+=eq.bonus.range;
+  notify(`${eq.icon} ${eq.name} ausgerüstet!`);
+  openEquip(ui);
+};
+
+// ══════════════════════════════════════════════════
+//  ENEMIES
+// ══════════════════════════════════════════════════
+function spawnEnemy(){
+  const angle=Math.random()*Math.PI*2;
+  const r=50+Math.random()*8;
+  const sx=Math.cos(angle)*r, sz=Math.sin(angle)*r;
+  const elite=waveNum>3&&Math.random()<0.2;
+
+  const g=new THREE.Group();
+  const bmat=elite?lm(0x330033):MAT.enemy;
+  addTo(g,B(0.62,0.95,0.56,bmat),0,0.82,0);
+  addTo(g,SP(0.3,7,MAT.enemy_helm),0,1.75,0);
+  addTo(g,B(0.07,0.85,0.07,lm(0x888888)),0.44,1.15,0);
+  if(elite){
+    addTo(g,B(0.64,0.5,0.58,lm(0x4a004a)),0,0.95,0);
+    addTo(g,B(0.1,1.6,0.08,lm(0xcc2222)),0,2.5,0);// banner
+  }
+  [[-.17,0],[.17,0]].forEach(([lx])=>{addTo(g,B(0.23,0.53,0.25,bmat),lx,0.28,0);});
+  g.position.set(sx,0,sz); g.castShadow=true; scene.add(g);
+
+  const spd=0.045+waveNum*0.004+(elite?0.015:0);
+  const hp=1+(waveNum-1)*0.8+(elite?2:0);
+  enemies.push({g,x:sx,z:sz,hp,maxHp:hp,speed:spd,dead:false,wobble:Math.random()*Math.PI*2,elite});
+}
+
+function killEnemy(en){
+  en.dead=true;
+  scene.remove(en.g);
+  const reward=(en.elite?12:5)+waveNum;
+  res.gold+=reward; res.food+=2; updateHUD();
+  // Death flash
+  const fl=SP(0.8,6,new THREE.MeshBasicMaterial({color:0xff4400,transparent:true,opacity:0.9}));
+  fl.position.set(en.x,1.2,en.z); scene.add(fl);
+  let lf=0;
+  const ti=setInterval(()=>{lf+=0.1;fl.material.opacity=0.9-lf;fl.scale.setScalar(1+lf*3);if(lf>0.9){scene.remove(fl);clearInterval(ti);}},25);
+}
+
+window.startWave=function(){
+  if(waveActive||gameOver) return;
+  waveActive=true;
+  const isBossWave=waveNum%5===0;
+  const hasDragon=waveNum>=3&&(waveNum%3===0||isBossWave);
+  const bannerSub=isBossWave?`👑 BOSS-WELLE! Drache + ${5+waveNum*3} Feinde!`:hasDragon?`🐉 Drache + ${5+waveNum*3} Feinde greifen an!`:`${5+waveNum*3} Feinde greifen an!`;
+  showBanner(isBossWave?`👑 BOSS-WELLE ${waveNum}!`:`WELLE ${waveNum} ⚔️`,bannerSub);
+  let n=5+waveNum*3,s=0;
+  const iv=setInterval(()=>{if(s>=n){clearInterval(iv);return;}spawnEnemy();s++;},480);
+  if(hasDragon) setTimeout(()=>spawnDragon(isBossWave),2000+(isBossWave?0:1500));
+};
+
+// ══════════════════════════════════════════════════
+//  PROJECTILES
+// ══════════════════════════════════════════════════
+function fireAt(sx,sy,sz,target,type){
+  let mesh,speed,splash=0,dmg=1,arc=false,minHeight=0;
+  if(type==='arrow'){
+    mesh=place(CY(0.035,0.035,0.6,4,MAT.arrow),sx,sy,sz,false);
+    speed=0.55; dmg=1; arc=true; minHeight=2.5; // flies over units
+  } else if(type==='crossbow'){
+    mesh=place(CY(0.04,0.04,0.7,4,lm(0x8a6030)),sx,sy,sz,false);
+    speed=0.7; dmg=500; arc=true; minHeight=3.0; // flatter but still over units
+  } else if(type==='catapult'){
+    mesh=place(SP(0.3,6,lm(0x444444)),sx,sy,sz,false);
+    speed=0.28; splash=3; dmg=3; arc=true; minHeight=6; // high lob
+  } else if(type==='cannon'){
+    mesh=place(SP(0.22,6,MAT.cannonball),sx,sy,sz,false);
+    speed=0.65; splash=2; dmg=4; arc=true; minHeight=4; // medium arc
+  } else if(type==='magic'){
+    mesh=place(SP(0.25,6,MAT.magic_glow),sx,sy,sz,false);
+    mesh.add(new THREE.PointLight(0x4444ff,2,3));
+    speed=0.38; splash=4; dmg=4; arc=true; minHeight=3;
+  } else { return; }
+  projectiles.push({mesh,target,speed,splash,dmg,type,done:false,arc,minHeight});
+}
+
+// ══════════════════════════════════════════════════
+//  CAMERA
+// ══════════════════════════════════════════════════
+let camTheta=0.2, camPhi=0.52, camRadius=35;
+let isDrag=false, lastM={x:0,y:0}, isRightDrag=false;
+
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('mousedown',e=>{
+  if(e.button===2){isRightDrag=true;lastM={x:e.clientX,y:e.clientY};}
+  else if(e.button===0){isDrag=false;lastM={x:e.clientX,y:e.clientY};}
+  cv.addEventListener('mousemove',onMM);
+  cv.addEventListener('mouseup',onMU);
+});
+function onMM(e){
+  const dx=e.clientX-lastM.x,dy=e.clientY-lastM.y;
+  if(isRightDrag||Math.abs(dx)+Math.abs(dy)>5){
+    if(!isRightDrag) isDrag=true;
+    camTheta-=dx*0.007;
+    camPhi=Math.max(0.12,Math.min(1.3,camPhi+dy*0.005));
+    lastM={x:e.clientX,y:e.clientY};
+  }
+}
+function onMU(e){
+  cv.removeEventListener('mousemove',onMM);
+  cv.removeEventListener('mouseup',onMU);
+  if(!isDrag&&e.button===0&&!gameOver){
+    if(buildMode&&buildMode!=='move'){
+      const rect=cv.getBoundingClientRect();
+      const mouse=new THREE.Vector2(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
+      const ray=new THREE.Raycaster(); ray.setFromCamera(mouse,cam);
+      const pl=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+      const pt=new THREE.Vector3();
+      if(ray.ray.intersectPlane(pl,pt)){
+        const{gx,gz}=w2g(pt.x,pt.z); buildAt(gx,gz);
+      }
+    } else if(selectedUnit){
+      // Move unit to click
+      const rect=cv.getBoundingClientRect();
+      const mouse=new THREE.Vector2(((e.clientX-rect.left)/rect.width)*2-1,-((e.clientY-rect.top)/rect.height)*2+1);
+      const ray=new THREE.Raycaster(); ray.setFromCamera(mouse,cam);
+      const pl=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+      const pt=new THREE.Vector3();
+      if(ray.ray.intersectPlane(pl,pt)){
+        selectedUnit.target=null; selectedUnit.state='bewegt';
+        selectedUnit._dest={x:pt.x,z:pt.z};
+      }
+    }
+  }
+  isRightDrag=false;
+}
+cv.addEventListener('wheel',e=>{camRadius=Math.max(10,Math.min(70,camRadius+e.deltaY*0.04));});
+
+// ══════════════════════════════════════════════════
+//  KEYBOARD
+// ══════════════════════════════════════════════════
+const K={};
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  K[k]=true;
+  if(k==='e') doInteract();
+  if(k==='escape'){buildMode=null; setMode('move');}
+});
+window.addEventListener('keyup',e=>K[e.key.toLowerCase()]=false);
+
+// ══════════════════════════════════════════════════
+//  MODES & UI
+// ══════════════════════════════════════════════════
+window.setMode=function(m){
+  buildMode=(m==='move')?null:m;
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('tb-'+m);
+  if(btn) btn.classList.add('active');
+  if(m==='move') notify('Bewegungsmodus — WASD oder Pfeiltasten zum Bewegen');
+};
+
+window.openRecruit=function(){document.getElementById('modal-recruit').classList.add('show');};
+window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
+window.buyRes=function(type,amount,cost){
+  if(res.gold<cost){notify('Nicht genug Gold!');return;}
+  res.gold-=cost;
+  if(type==='repair'){castleHP=Math.min(maxHP,castleHP+amount);notify(`❤️ Burg um ${amount} LP repariert!`);}
+  else{res[type]=(res[type]||0)+amount;notify(`✅ ${amount}× ${type==='wood'?'Holz':type==='metal'?'Metall':type==='stone'?'Stein':type==='food'?'Nahrung':type} gekauft!`);}
+  updateHUD();
+};
+
+// ══════════════════════════════════════════════════
+//  INTERACTION
+// ══════════════════════════════════════════════════
+function doInteract(){
+  // Animals
+  for(const a of animals){
+    if(d2(player,a)<4){
+      const says = a.type==='cow'
+        ? ['Muuuh! Schön, dich zu sehen, Ritter!','Moooh! Was für ein prächtiger Tag!','Muuuh! Möchtet Ihr Milch?'][Math.floor(Math.random()*3)]
+        : ['Bääähh! Ich bin das flauschigste Schaf im Land!','Määähh! Streichelt mich, edler Ritter!','Bääähh! Wolle gefällig, Herr?'][Math.floor(Math.random()*3)];
+      res.gold += a.gold;
+      notify(`${a.type==='cow'?'🐄':'🐑'} "${says}" — +${a.gold} Gold!`, 3000);
+      a.gold = Math.max(1, Math.floor(a.gold * 0.6));
+      updateHUD(); return;
+    }
+  }
+  // Merchants
+  for(const m of mercs){
+    if(d2(player,m)<4.5){
+      document.getElementById('shop-flavor').textContent=m.flavor;
+      document.getElementById('modal-shop').classList.add('show'); return;
+    }
+  }
+  // Smithy buildings
+  for(const s of smithies){
+    if(d2(player,{x:s.wx,z:s.wz})<4){ openSmithyModal(); return; }
+  }
+  // Trees
+  for(const t of trees){
+    if(t.hp<=0) continue;
+    if(d2(player,t)<2.8){
+      t.hp--; res.wood+=1; notify('🪵 +1 Holz gesammelt!');
+      if(t.hp<=0) scene.remove(t.g);
+      else t.g.scale.y=lerp(1,0.6,(3-t.hp)/3);
+      updateHUD(); return;
+    }
+  }
+  // Ores
+  for(const o of ores){
+    if(o.hp<=0) continue;
+    if(d2(player,o)<2.5){
+      o.hp--;
+      if(o.type==='metal'){res.metal++;notify('⚙️ +1 Metall abgebaut!');}
+      else if(o.type==='stone_ore'){res.stone++;notify('🪨 +1 Stein abgebaut!');}
+      else{res.gold+=3;notify('💰 +3 Gold! Seltenes Golderz gefunden!');}
+      if(o.hp<=0) scene.remove(o.g);
+      updateHUD(); return;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  MAIN LOOP
+// ══════════════════════════════════════════════════
+let T=0;
+const clock=new THREE.Clock();
+let refreshUI=0;
+
+
+// ══════════════════════════════════════════════════
+//  HP BARS (2D canvas overlay)
+// ══════════════════════════════════════════════════
+const hpCv=document.getElementById('hp-canvas');
+const hpCtx=hpCv.getContext('2d');
+hpCv.width=window.innerWidth; hpCv.height=window.innerHeight;
+window.addEventListener('resize',()=>{hpCv.width=innerWidth;hpCv.height=innerHeight;});
+
+function drawHPBar(worldX,worldY,worldZ,hp,maxHp,label,isEnemy,isBoss){
+  const v=new THREE.Vector3(worldX,worldY,worldZ);
+  v.project(cam);
+  if(v.z>1||v.z<-1) return;
+  const sx=(v.x*0.5+0.5)*hpCv.width;
+  const sy=(-v.y*0.5+0.5)*hpCv.height;
+  const w=isBoss?80:44, h=isBoss?9:5;
+  const pct=Math.max(0,hp/maxHp);
+  // BG
+  hpCtx.fillStyle='rgba(0,0,0,0.6)';
+  hpCtx.fillRect(sx-w/2-1,sy-h/2-1,w+2,h+2);
+  // Bar BG
+  hpCtx.fillStyle='rgba(80,20,20,0.8)';
+  hpCtx.fillRect(sx-w/2,sy-h/2,w,h);
+  // Bar fill
+  const col=isBoss?`hsl(${pct*30},100%,50%)`:(isEnemy?`hsl(${pct*80+10},90%,45%)`:`hsl(${pct*110+10},85%,42%)`);
+  hpCtx.fillStyle=col;
+  hpCtx.fillRect(sx-w/2,sy-h/2,w*pct,h);
+  // Label
+  if(label){
+    hpCtx.fillStyle=isBoss?'#ffcc44':'rgba(255,255,255,0.85)';
+    hpCtx.font=isBoss?'bold 10px Cinzel,serif':'8px Cinzel,serif';
+    hpCtx.textAlign='center';
+    hpCtx.fillText(label,sx,sy-h/2-3);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  DRAGONS
+// ══════════════════════════════════════════════════
+function makeDragonMesh(){
+  const g=new THREE.Group();
+  // Body
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.9,3.5,8),MAT.dragon_body);
+  body.rotation.z=Math.PI/2; body.position.set(0,0,0); body.castShadow=true; g.add(body);
+  // Belly
+  const belly=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.7,3.3,8),MAT.dragon_belly);
+  belly.rotation.z=Math.PI/2; belly.position.set(0,-0.12,0); g.add(belly);
+  // Neck
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.5,1.8,7),MAT.dragon_body);
+  neck.position.set(2.0,0.5,0); neck.rotation.z=-0.5; g.add(neck);
+  // Head
+  const head=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.75,0.85),MAT.dragon_body);
+  head.position.set(3.1,1.1,0); head.castShadow=true; g.add(head);
+  // Snout
+  const snout=new THREE.Mesh(new THREE.BoxGeometry(0.65,0.45,0.65),MAT.dragon_body);
+  snout.position.set(3.75,0.95,0); g.add(snout);
+  // Eyes
+  [-0.3,0.3].forEach(ey=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),MAT.dragon_eye);
+    eye.position.set(3.2,1.35,ey); g.add(eye);
+    const glow=new THREE.PointLight(0xff2200,1.5,3);
+    glow.position.set(3.2,1.35,ey); g.add(glow);
+  });
+  // Horns
+  [-0.25,0.25].forEach(hz=>{
+    const horn=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.6,5),MAT.dragon_red);
+    horn.position.set(3.0,1.8,hz); horn.rotation.z=0.3*(hz>0?1:-1); g.add(horn);
+  });
+  // Tail
+  const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.5,3,6),MAT.dragon_body);
+  tail.position.set(-2.6,-0.2,0); tail.rotation.z=0.4; g.add(tail);
+  const tailTip=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.8,4),MAT.dragon_red);
+  tailTip.position.set(-4.0,-0.5,0); tailTip.rotation.z=0.4; g.add(tailTip);
+  // Wings
+  [-1,1].forEach(side=>{
+    const wingG=new THREE.Group();
+    // Main wing spar
+    const spar=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.06,3.5,6),MAT.dragon_dark);
+    spar.rotation.z=side*0.5; spar.position.z=side*0.3; wingG.add(spar);
+    // Wing membrane (wide flat box)
+    const mem=new THREE.Mesh(new THREE.BoxGeometry(3.0,0.08,1.8),MAT.dragon_wing);
+    mem.position.set(0,0,side*1.2); mem.rotation.z=side*0.3; wingG.add(mem);
+    const mem2=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.06,1.2),MAT.dragon_wing);
+    mem2.position.set(-0.5,0.3,side*2.0); mem2.rotation.z=side*0.4; wingG.add(mem2);
+    wingG.position.set(0.2,0.6,0);
+    g.add(wingG);
+  });
+  // Legs
+  [[-0.8,0.8],[0.8,0.8],[-0.8,-0.8],[0.8,-0.8]].forEach(([lx,lz])=>{
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.14,1.0,6),MAT.dragon_body);
+    leg.position.set(lx,-1.1,lz); g.add(leg);
+    const claw=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.35,4),MAT.dragon_red);
+    claw.position.set(lx,-1.65,lz); g.add(claw);
+  });
+  return g;
+}
+
+function spawnDragon(bossWave){
+  const angle=Math.random()*Math.PI*2;
+  const r=55+Math.random()*5;
+  const sx=Math.cos(angle)*r, sz=Math.sin(angle)*r;
+  const g=makeDragonMesh();
+  const flyH=12+Math.random()*5;
+  g.position.set(sx,flyH,sz);
+  g.scale.setScalar(bossWave?2.2:1.4);
+  scene.add(g);
+
+  // Fire breath light
+  const fireLight=new THREE.PointLight(0xff5500,0,8);
+  g.add(fireLight);
+
+  const maxHp=bossWave?2000:1000;
+  dragons.push({
+    g, x:sx, z:sz, y:flyH,
+    hp:maxHp, maxHp,
+    speed:bossWave?0.04:0.06,
+    atk:bossWave?25:12,
+    fireLight,
+    state:'fliegt', // flying -> diving -> breathing -> retreating
+    cooldown:3+Math.random()*2,
+    wingPhase:Math.random()*Math.PI*2,
+    dead:false, boss:bossWave,
+    fireCooldown:0,
+    targetAngle:angle+Math.PI,
+  });
+
+  // Show alert
+  const al=document.getElementById('dragon-alert');
+  document.getElementById('dragon-sub').textContent=bossWave?'🔥 Ein URALTER DRACHE greift an! Alle Waffen in Stellung!':'Ein Drache greift euer Königreich an!';
+  al.classList.add('show');
+  setTimeout(()=>al.classList.remove('show'),3000);
+}
+
+function spawnDragonFire(dx,dy,dz,tdx,tdz){
+  const mat=new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:0.9});
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(0.35,6,6),mat);
+  mesh.position.set(dx,dy,dz);
+  const glow=new THREE.PointLight(0xff4400,3,6);
+  mesh.add(glow);
+  scene.add(mesh);
+  // Find closest enemy (friendly fire on enemies)
+  let tgt=null, nd=9999;
+  // Target the castle/player
+  const targets=[{x:0,z:0},{x:player.x,z:player.z}];
+  targets.forEach(t=>{
+    const d=Math.sqrt((dx-t.x)**2+(dz-t.z)**2);
+    if(d<nd){nd=d;tgt=t;}
+  });
+  projectiles.push({mesh,target:null,fireTarget:{x:tdx,z:tdz},speed:0.55,splash:3.5,dmg:8,type:'dragonfire',done:false,arc:false});
+}
+
+
+function killDragon(dr){
+  if(dr.dead) return;
+  dr.dead=true;
+  // Epic death: dragon spirals down
+  let fallT=0;
+  const fallIv=setInterval(()=>{
+    fallT+=0.05;
+    dr.g.position.y=Math.max(0,dr.g.position.y-0.3);
+    dr.g.rotation.z+=0.1;
+    dr.g.scale.setScalar(Math.max(0.1,dr.boss?2.2-fallT*0.5:1.4-fallT*0.5));
+    if(dr.g.position.y<=0||fallT>3){
+      scene.remove(dr.g);
+      clearInterval(fallIv);
+      // Big explosion
+      const ex=SP(3,8,new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:0.9}));
+      ex.position.set(dr.x,1,dr.z); scene.add(ex);
+      const exL=new THREE.PointLight(0xff4400,15,20); ex.add(exL);
+      let ef=0;
+      const eti=setInterval(()=>{ef+=0.06;ex.material.opacity=0.9-ef;ex.scale.setScalar(1+ef*8);if(ef>0.9){scene.remove(ex);clearInterval(eti);}},30);
+    }
+  },50);
+  const reward=dr.boss?400:150;
+  res.gold+=reward; updateHUD();
+  showBanner(dr.boss?'🏆 URALTER DRACHE BESIEGT!':'🐉 DRACHE BESIEGT!',`+${reward} Gold erbeutet! Großartig, tapferer Ritter!`);
+}
+
+
+// ══════════════════════════════════════════════════
+//  SCHMIEDE & SCHWERTER
+// ══════════════════════════════════════════════════
+const SWORDS = {
+  wood:    {name:'Holzschwert',    icon:'🪵', cost:{wood:8},           bonus:{atk:5},  color:0x7a5020, desc:'Einfach, aber besser als nichts'},
+  stone:   {name:'Steinschwert',   icon:'🪨', cost:{stone:10,wood:4},  bonus:{atk:12}, color:0x888880, desc:'Solide und günstig'},
+  iron:    {name:'Eisenschwert',   icon:'⚙️', cost:{metal:15,wood:5},  bonus:{atk:22}, color:0x9090aa, desc:'Das Schwert eines echten Ritters'},
+  diamond: {name:'Diamantschwert', icon:'💎', cost:{stone:8,metal:20,gold:50}, bonus:{atk:40}, color:0x50d0ff, desc:'Unglaublich scharf und selten'},
+  nether:  {name:'Roteisenklinge', icon:'🔴', cost:{metal:30,gold:80}, bonus:{atk:60,hp:50}, color:0xcc2244, desc:'Aus dem tiefsten Erz geschmiedet — Legendär!'},
+};
+
+const SMITHS = [
+  {name:'Grummel der Lehrling', cost:40,  bonus:0,   desc:'"Ich lern's noch, aber ich versuch's!"'},
+  {name:'Thorin der Schmied',   cost:100, bonus:0.15, desc:'"20 Jahre am Amboss. Vertraut mir!"'},
+  {name:'Erika Meisterschmied', cost:200, bonus:0.3,  desc:'"Meine Klingen haben Drachen getötet."'},
+];
+let hiredSmith = null;
+
+let smithyTabActive = 'schwerter';
+window.smithyTab = function(tab) {
+  smithyTabActive = tab;
+  document.getElementById('stab-schwerter').style.background = tab==='schwerter' ? 'rgba(200,160,70,0.35)' : '';
+  document.getElementById('stab-schmied').style.background  = tab==='schmied'  ? 'rgba(200,160,70,0.35)' : '';
+  renderSmithyBody();
+};
+
+function renderSmithyBody() {
+  const el = document.getElementById('smithy-body');
+  if(!el) return;
+  if(smithyTabActive === 'schwerter') {
+    let html = '';
+    Object.entries(SWORDS).forEach(([key, sw]) => {
+      const costStr = Object.entries(sw.cost).map(([k,v])=>`${v}${k==='wood'?'🪵':k==='stone'?'🪨':k==='metal'?'⚙️':'💰'}`).join(' ');
+      const bonusStr = Object.entries(sw.bonus).map(([k,v])=>`+${v} ${k==='atk'?'ATK':'HP'}`).join(', ');
+      html += `<div class="modal-item">
+        <div class="mi-info">
+          <div class="mi-name">${sw.icon} ${sw.name}</div>
+          <div class="mi-cost">${costStr} | ${bonusStr}</div>
+          <div class="mi-stat" style="color:rgba(180,180,180,0.6);font-style:italic;">"${sw.desc}"</div>
+        </div>
+        <button class="mi-btn" onclick="forgeSword('${key}')">SCHMIEDEN</button>
+      </div>`;
+    });
+    if(hiredSmith) html += `<p style="font-family:'Crimson Text',serif;font-size:11px;color:rgba(100,220,100,0.7);margin-top:8px;">⚒️ ${hiredSmith.name} arbeitet: +${Math.round(hiredSmith.bonus*100)}% Bonus-ATK</p>`;
+    el.innerHTML = html;
+  } else {
+    let html = '';
+    SMITHS.forEach((sm, i) => {
+      const owned = hiredSmith && hiredSmith.name === sm.name;
+      html += `<div class="modal-item">
+        <div class="mi-info">
+          <div class="mi-name">👨‍🔧 ${sm.name} ${owned?'✅':''}</div>
+          <div class="mi-cost">${sm.cost} Gold/einmalig | +${Math.round(sm.bonus*100)}% Schmied-Bonus</div>
+          <div class="mi-stat" style="font-family:'Crimson Text',serif;font-style:italic;color:rgba(180,160,120,0.7);">${sm.desc}</div>
+        </div>
+        ${owned ? '<span style="font-size:10px;color:var(--green)">✅ Angestellt</span>' : `<button class="mi-btn" onclick="hireSmith(${i})">ANSTELLEN</button>`}
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+}
+
+window.forgeSword = function(key) {
+  if(smithies.length === 0) { notify('Baue zuerst eine Schmiede!'); return; }
+  const sw = SWORDS[key];
+  for(const [k,v] of Object.entries(sw.cost)) {
+    if((res[k]||0) < v) { notify(`Nicht genug ${k==='wood'?'Holz':k==='stone'?'Stein':k==='metal'?'Metall':'Gold'}!`); return; }
+  }
+  for(const [k,v] of Object.entries(sw.cost)) res[k] -= v;
+  updateHUD();
+  // Apply to all knights (and spear/cavalry)
+  let buffed = 0;
+  const smithBonus = hiredSmith ? hiredSmith.bonus : 0;
+  playerUnits.forEach(u => {
+    if(['knight','spear','cavalry'].includes(u.type)) {
+      const bonus = Math.round(sw.bonus.atk * (1 + smithBonus));
+      u.atk += bonus;
+      if(sw.bonus.hp) { u.hp += sw.bonus.hp; u.maxHp += sw.bonus.hp; }
+      buffed++;
+    }
+  });
+  notify(`⚒️ ${sw.icon} ${sw.name} geschmiedet! +${Math.round(sw.bonus.atk*(1+smithBonus))} Angriff auf ${buffed} Einheiten!`);
+  // Forge flash on all smithies
+  smithies.forEach(s => {
+    s.light.intensity = 12;
+    setTimeout(() => s.light.intensity = 2, 600);
+  });
+};
+
+window.hireSmith = function(i) {
+  const sm = SMITHS[i];
+  if(res.gold < sm.cost) { notify('Nicht genug Gold!'); return; }
+  res.gold -= sm.cost; updateHUD();
+  hiredSmith = sm;
+  notify(`👨‍🔧 ${sm.name} angestellt! Schmiedebonus: +${Math.round(sm.bonus*100)}%`);
+  renderSmithyBody();
+};
+
+function openSmithyModal() {
+  document.getElementById('smithy-flavor').textContent = smithies.length > 0
+    ? '"Was braucht Ihr, Ritter? Bei mir brennt immer das Feuer!"'
+    : '"Baut zuerst eine Schmiede, dann kommt zu mir!"';
+  smithyTabActive = 'schwerter';
+  renderSmithyBody();
+  document.getElementById('modal-smithy').classList.add('show');
+}
+
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05);
+  T+=dt;
+
+  // ── Day/Night ──
+  dayTime+=dt/150;
+  if(dayTime>1){
+    dayTime=0; dayNum++;
+    // Daily income
+    res.gold+=5+markets.length*10;
+    res.food+=farms.length*3;
+    res.food-=Math.ceil(playerUnits.filter(u=>!u.dead).length*0.5);
+    res.food=Math.max(0,res.food);
+    updateHUD();
+    document.getElementById('day-chip').textContent=(dayNum%2===0?'🌙':'☀️')+' TAG '+dayNum;
+    notify(dayNum%2===0?`🌙 Nacht ${dayNum} — ${markets.length*10+5} Gold Einnahmen`:`☀️ Guten Morgen! Farmen liefern: +${farms.length*3} Nahrung`);
+  }
+  const night=dayTime>0.72||dayTime<0.08;
+  if(night!==isNight){
+    isNight=night;
+    sun.intensity=night?0.2:2; sun.color.setHex(night?0x223366:0xffe8cc);
+    scene.background.setHex(night?0x04020a:0x080510);
+    scene.fog.color.setHex(night?0x04020a:0x080510);
+  }
+
+  // ── Player ──
+  let mx=0,mz=0;
+  if(K['w']||K['arrowup']) mz-=1;
+  if(K['s']||K['arrowdown']) mz+=1;
+  if(K['a']||K['arrowleft']) mx-=1;
+  if(K['d']||K['arrowright']) mx+=1;
+  if(mx||mz){
+    const a=camTheta;
+    const nx=mx*Math.cos(a)-mz*Math.sin(a);
+    const nz=mx*Math.sin(a)+mz*Math.cos(a);
+    player.x=Math.max(-58,Math.min(58,player.x+nx*player.speed));
+    player.z=Math.max(-58,Math.min(58,player.z+nz*player.speed));
+    player.g.position.set(player.x,0,player.z);
+    player.g.rotation.y=Math.atan2(nx,nz)+Math.PI;
+    player.g.children[0].position.y=0.8+Math.sin(T*10)*0.045;
+  }
+
+  // ── Units ──
+  playerUnits.forEach(u=>{
+    if(u.dead) return;
+    u.cooldown=Math.max(0,u.cooldown-dt);
+
+    if(u._dest){
+      const dx=u._dest.x-u.x, dz=u._dest.z-u.z;
+      const dd=Math.sqrt(dx*dx+dz*dz);
+      if(dd>0.5){
+        u.x+=dx/dd*u.spd; u.z+=dz/dd*u.spd;
+        u.g.position.set(u.x,0,u.z);
+        u.g.rotation.y=Math.atan2(dx,dz);
+      } else { u._dest=null; u.state='ruhig'; }
+    }
+
+    // Find enemy target — Ritter greifen IMMER an, unbegrenzte Reichweite
+    if(!u.target||u.target.dead) u.target=null;
+    if(!u.target&&u.state!=='bewegt'){
+      let nearest=null,nd=9999;
+      enemies.forEach(en=>{
+        if(en.dead) return;
+        const dd=d2(u,en);
+        if(dd<nd){nearest=en;nd=dd;}
+      });
+      // Ritter: keine Reichweitenbeschränkung — greifen immer den nächsten an!
+      const maxRange = u.type==='knight' ? 9999
+        : (u.type==='archer'||u.type==='mage' ? u.range : u.range+20);
+      if(nearest && d2(u,nearest)<maxRange) u.target=nearest;
+
+      // Ritter & Kavallerie greifen auch Drachen an
+      if(u.type==='knight'||u.type==='cavalry'){
+        dragons.forEach(dr=>{
+          if(dr.dead) return;
+          const dd=d2(u,dr);
+          if(dd<nd){ nearest=null; u._dragonTarget=dr; nd=dd; }
+        });
+      }
+    }
+
+    // Drachen-Angriff für Ritter
+    if(u._dragonTarget&&!u._dragonTarget.dead){
+      const dd=d2(u,u._dragonTarget);
+      if(dd>4){
+        const dx=u._dragonTarget.x-u.x, dz=u._dragonTarget.z-u.z;
+        const d=Math.sqrt(dx*dx+dz*dz);
+        u.x+=dx/d*u.spd; u.z+=dz/d*u.spd;
+        u.g.position.set(u.x,0,u.z);
+        u.g.rotation.y=Math.atan2(dx,dz);
+        u.state='bewegt';
+      } else if(u.cooldown<=0){
+        u.state='kämpft';
+        const dmg=u.atkMin?u.atkMin+Math.random()*(u.atkMax-u.atkMin):u.atk;
+        u._dragonTarget.hp-=dmg;
+        if(u._dragonTarget.hp<=0) killDragon(u._dragonTarget);
+        u.cooldown=0.6;
+        u._dragonTarget=null;
+      }
+    } else if(u.target&&!u.target.dead){
+      const dd=d2(u,u.target);
+      if(dd>u.range){
+        const dx=u.target.x-u.x, dz=u.target.z-u.z;
+        const d=Math.sqrt(dx*dx+dz*dz);
+        u.x+=dx/d*u.spd; u.z+=dz/d*u.spd;
+        u.g.position.set(u.x,0,u.z);
+        u.g.rotation.y=Math.atan2(dx,dz);
+        u.state='bewegt';
+      } else if(u.cooldown<=0){
+        u.state='kämpft';
+        const ptype=(u.type==='archer'?'arrow':u.type==='mage'?'magic':'arrow');
+        if(u.type==='knight'||u.type==='spear'||u.type==='cavalry'){
+          // Zufälliger Schaden zwischen atkMin und atkMax
+          const dmg=u.atkMin ? u.atkMin+Math.random()*(u.atkMax-u.atkMin) : u.atk;
+          u.target.hp-=dmg*dt*2;
+          if(u.target.hp<=0) killEnemy(u.target);
+          u.cooldown=0.5;
+        } else {
+          fireAt(u.x,1.8,u.z,u.target,ptype);
+          u.cooldown=u.type==='archer'?1.2:1.8;
+        }
+      }
+    } else { u.state='ruhig'; u._dragonTarget=null; }
+
+    // Walking animation
+    u.wobble+=dt*4;
+    if(u.g.children[0]) u.g.children[0].position.y=(u.state!=='ruhig'?0.8+Math.sin(u.wobble)*0.05:0.8);
+  });
+
+  // ── Enemies ──
+  let alive=0;
+  enemies.forEach(en=>{
+    if(en.dead) return; alive++;
+    const dx=-en.x, dz=-en.z;
+    const d=Math.sqrt(dx*dx+dz*dz);
+    if(d<4.5){
+      castleHP-=dt*4;
+      updateHUD();
+      if(castleHP<=0&&!gameOver){
+        gameOver=true; showBanner('🔥 DIE BURG FIEL 🔥','Dein Königreich ist verloren... Lade die Seite neu!');
+      }
+    } else {
+      en.x+=dx/d*en.speed; en.z+=dz/d*en.speed;
+      en.g.position.set(en.x,0,en.z);
+      en.g.rotation.y=Math.atan2(-dx,-dz);
+      // Walk bob
+      if(en.g.children[0]) en.g.children[0].position.y=0.82+Math.sin(T*7+en.wobble)*0.06;
+      // Wall check
+      const{gx,gz}=w2g(en.x,en.z);
+      const k=gk(gx,gz);
+      if(cells[k]&&cells[k].type!=='center'){
+        en.x-=dx/d*en.speed*2.5; en.z-=dz/d*en.speed*2.5;
+        en.hp-=dt*1.5;
+        if(en.hp<=0) killEnemy(en);
+      }
+    }
+  });
+  // Remove dead
+  for(let i=enemies.length-1;i>=0;i--) if(enemies[i].dead) enemies.splice(i,1);
+  for(let i=playerUnits.length-1;i>=0;i--) if(playerUnits[i].dead) playerUnits.splice(i,1);
+
+  // ── Dragons ──
+  dragons.forEach(dr=>{
+    if(dr.dead) return;
+    dr.wingPhase+=dt*3;
+    dr.cooldown=Math.max(0,dr.cooldown-dt);
+    dr.fireCooldown=Math.max(0,dr.fireCooldown-dt);
+
+    // Wing flap animation
+    dr.g.children.forEach((c,idx)=>{
+      if(c.isGroup) c.rotation.x=Math.sin(dr.wingPhase+(idx%2)*Math.PI)*0.4;
+    });
+    // Body bob in flight
+    dr.g.position.y=dr.y+Math.sin(dr.wingPhase*0.5)*0.8;
+    dr.g.rotation.z=Math.sin(dr.wingPhase*0.3)*0.05;
+
+    if(dr.state==='fliegt'){
+      // Circle around castle, slowly descend to attack
+      dr.targetAngle+=dt*0.4*(dr.boss?0.7:1);
+      const tr=28+Math.sin(dr.wingPhase*0.2)*5;
+      const tx=Math.cos(dr.targetAngle)*tr;
+      const tz=Math.sin(dr.targetAngle)*tr;
+      dr.x+=(tx-dr.x)*dt*0.6;
+      dr.z+=(tz-dr.z)*dt*0.6;
+      dr.y=lerp(dr.y,10+Math.sin(dr.wingPhase*0.3)*3,dt*0.5);
+      dr.g.position.set(dr.x,dr.g.position.y,dr.z);
+      dr.g.rotation.y=dr.targetAngle+Math.PI/2;
+
+      // Fire breath at intervals
+      if(dr.fireCooldown<=0){
+        // Pick target - castle or player
+        const fireX=Math.random()<0.6?0:player.x+rnd(-3,3);
+        const fireZ=Math.random()<0.6?0:player.z+rnd(-3,3);
+        spawnDragonFire(dr.x,dr.g.position.y-1,dr.z,fireX,fireZ);
+        dr.fireLight.intensity=8;
+        setTimeout(()=>{if(dr.fireLight) dr.fireLight.intensity=0;},300);
+        dr.fireCooldown=dr.boss?1.5:2.5;
+      }
+
+      // Units attack dragon
+      if(dr.cooldown<=0){
+        // Dragon swoops
+        dr.state='sturzflug'; dr.cooldown=5;
+        dr.diveTarget={x:rnd(-5,5),z:rnd(-5,5)};
+      }
+    } else if(dr.state==='sturzflug'){
+      const tx=dr.diveTarget.x, tz=dr.diveTarget.z;
+      dr.x+=(tx-dr.x)*dt*1.5;
+      dr.z+=(tz-dr.z)*dt*1.5;
+      dr.y=lerp(dr.y,5,dt*2);
+      dr.g.position.set(dr.x,dr.g.position.y,dr.z);
+      dr.g.rotation.y=Math.atan2(tx-dr.x,tz-dr.z);
+      // Claw attack on arrival
+      if(Math.abs(dr.x-tx)<2&&Math.abs(dr.z-tz)<2){
+        castleHP-=dr.atk; updateHUD();
+        playerUnits.forEach(u=>{if(!u.dead&&d2(u,{x:tx,z:tz})<5){u.hp-=dr.atk*0.7;if(u.hp<=0)u.dead=true;}});
+        notify(`🐉 Drache schlägt zu! -${dr.atk} HP an der Burg!`);
+        dr.state='rückzug'; dr.cooldown=3;
+      }
+    } else if(dr.state==='rückzug'){
+      dr.y=lerp(dr.y,14,dt*1.5);
+      dr.g.position.y=dr.y;
+      if(dr.cooldown<=0) dr.state='fliegt';
+    }
+
+    // Player units attack dragon
+    playerUnits.forEach(u=>{
+      if(u.dead) return;
+      const dd=d2(u,dr);
+      if(dd<(u.type==='archer'||u.type==='mage'?u.range+5:6)&&u.cooldown<=0){
+        if(u.type==='archer') fireAt(u.x,1.8,u.z,{x:dr.x,z:dr.z,hp:dr.hp,dead:false,isDragon:true,_dr:dr},u.type==='mage'?'magic':'arrow');
+        else if(u.type==='knight'||u.type==='spear'||u.type==='cavalry'){
+          if(dd<5){dr.hp-=u.atk*dt*1.5;}
+        }
+        u.cooldown=(u.type==='archer'?1.2:0.8);
+      }
+    });
+    // Towers attack dragon
+    archerTowers.forEach(at=>{
+      const dd=d2({x:at.wx,z:at.wz},dr);
+      at.cooldown-=dt;
+      if(dd<20&&at.cooldown<=0){
+        const fakeTgt={x:dr.x,z:dr.z,hp:dr.hp,dead:false,isDragon:true,_dr:dr};
+        fireAt(at.wx,7.5,at.wz,fakeTgt,'arrow');
+        at.cooldown=0.9;
+      }
+    });
+    // Cannon & catapult
+    cannons.forEach(c=>{
+      if(d2({x:c.wx,z:c.wz},dr)<22&&c.cooldown<=0){
+        dr.hp-=15; c.cooldown=2.5;
+        const fl=new THREE.PointLight(0xff8800,8,5); fl.position.set(c.wx,1,c.wz); scene.add(fl);
+        setTimeout(()=>scene.remove(fl),120);
+        if(dr.hp<=0) killDragon(dr);
+      }
+    });
+    catapults.forEach(c=>{
+      if(d2({x:c.wx,z:c.wz},dr)>6&&d2({x:c.wx,z:c.wz},dr)<30&&c.cooldown<=0){
+        dr.hp-=20; c.cooldown=3;
+        if(dr.hp<=0) killDragon(dr);
+      }
+    });
+
+    if(dr.hp<=0) killDragon(dr);
+  });
+  for(let i=dragons.length-1;i>=0;i--) if(dragons[i].dead) dragons.splice(i,1);
+
+  // Wave end
+  if(waveActive===true&&alive===0&&enemies.length===0&&dragons.filter(d=>!d.dead).length===0){
+    waveActive='endet';
+    setTimeout(()=>{
+      waveActive=false;
+      const bonus=20+waveNum*10;
+      res.gold+=bonus; updateHUD(); waveNum++;
+      showBanner('✅ WELLE ÜBERSTANDEN!',`+${bonus} Gold erbeutet — Weiter bauen und stärker werden!`);
+      refreshSidePanel();
+    },1500);
+  }
+
+  // ── Towers ──
+  archerTowers.forEach(at=>{
+    at.cooldown-=dt;
+    if(at.cooldown>0) return;
+    let nearest=null,nd=99;
+    enemies.forEach(en=>{
+      if(en.dead) return;
+      const dd=d2({x:at.wx,z:at.wz},{x:en.x,z:en.z});
+      if(dd<16&&dd<nd){nearest=en;nd=dd;}
+    });
+    if(nearest){fireAt(at.wx,7.5,at.wz,nearest,'arrow');at.cooldown=1.1+Math.random()*0.4;}
+  });
+
+  // ── Catapults ──
+  catapults.forEach(cat=>{
+    cat.cooldown-=dt;
+    if(cat.cooldown>0) return;
+    let nearest=null,nd=99;
+    enemies.forEach(en=>{
+      if(en.dead) return;
+      const dd=d2({x:cat.wx,z:cat.wz},{x:en.x,z:en.z});
+      if(dd>6&&dd<28&&dd<nd){nearest=en;nd=dd;}
+    });
+    if(nearest){fireAt(cat.wx,1.8,cat.wz,nearest,'catapult');cat.cooldown=3.5;}
+    cat.g.rotation.y+=dt*0.5;
+  });
+
+  // ── Cannons ──
+  cannons.forEach(can=>{
+    can.cooldown-=dt;
+    if(can.cooldown>0) return;
+    let nearest=null,nd=99;
+    enemies.forEach(en=>{
+      if(en.dead) return;
+      const dd=d2({x:can.wx,z:can.wz},{x:en.x,z:en.z});
+      if(dd<22&&dd<nd){nearest=en;nd=dd;}
+    });
+    if(nearest){
+      fireAt(can.wx,1.2,can.wz,nearest,'cannon');can.cooldown=2.8;
+      const fl=new THREE.PointLight(0xff8800,8,5);
+      fl.position.set(can.wx,1,can.wz); scene.add(fl);
+      setTimeout(()=>scene.remove(fl),120);
+    }
+  });
+
+  // ── Riesenarmbrust ──
+  crossbows.forEach(cb=>{
+    if(cb.dead) return;
+    cb.cooldown-=dt;
+    // Enemies damage crossbow on contact
+    enemies.forEach(en=>{
+      if(en.dead) return;
+      if(d2({x:cb.wx,z:cb.wz},{x:en.x,z:en.z})<2.5){
+        cb.hp-=en.speed*dt*80;
+        if(cb.hp<=0&&!cb.dead){
+          cb.dead=true;
+          scene.remove(cb.g);
+          notify('💥 Riesenarmbrust zerstört!');
+        }
+      }
+    });
+    if(cb.cooldown>0) return;
+    let nearest=null,nd=99;
+    // Target enemies AND dragons (pierces through all)
+    const allTargets=[...enemies,...dragons.filter(d=>!d.dead).map(d=>({x:d.x,z:d.z,hp:d.hp,dead:d.dead,isDragon:true,_dr:d}))];
+    allTargets.forEach(en=>{
+      if(en.dead) return;
+      const dd=d2({x:cb.wx,z:cb.wz},{x:en.x,z:en.z});
+      if(dd<30&&dd<nd){nearest=en;nd=dd;}
+    });
+    if(nearest){
+      // Crossbow points toward target
+      cb.g.rotation.y=Math.atan2(nearest.x-cb.wx, nearest.z-cb.wz);
+      fireAt(cb.wx,2.2,cb.wz,nearest,'crossbow');
+      cb.cooldown=2.0;
+      // Recoil flash
+      const fl2=new THREE.PointLight(0xffdd88,6,4);
+      fl2.position.set(cb.wx,2,cb.wz); scene.add(fl2);
+      setTimeout(()=>scene.remove(fl2),100);
+    }
+  });
+
+  // ── Projectiles ──
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p=projectiles[i];
+    if(p.done){projectiles.splice(i,1);continue;}
+    if(p.type==='dragonfire'){
+      // Dragonfire moves toward fireTarget
+      const ft=p.fireTarget;
+      const dx2=ft.x-p.mesh.position.x, dy2=0-p.mesh.position.y+0.5, dz2=ft.z-p.mesh.position.z;
+      const dd2=Math.sqrt(dx2*dx2+dy2*dy2+dz2*dz2);
+      if(dd2<1.5){
+        // Hit! Damage castle & nearby units
+        castleHP-=p.dmg; updateHUD();
+        playerUnits.forEach(u=>{if(!u.dead&&d2(u,{x:ft.x,z:ft.z})<p.splash){u.hp-=p.dmg*0.5;if(u.hp<=0)u.dead=true;}});
+        if(d2(player,{x:ft.x,z:ft.z})<p.splash*1.5) notify('🔥 Drachenfeuer! Dein Ritter wurde getroffen!');
+        const fl=SP(1.2,6,new THREE.MeshBasicMaterial({color:0xff5500,transparent:true,opacity:0.9}));
+        fl.position.set(ft.x,1,ft.z); scene.add(fl);
+        const flL=new THREE.PointLight(0xff4400,8,10); fl.add(flL);
+        let lf3=0;
+        const ti3=setInterval(()=>{lf3+=0.08;fl.material.opacity=0.9-lf3;fl.scale.setScalar(1+lf3*5);if(lf3>0.9){scene.remove(fl);clearInterval(ti3);}},30);
+        scene.remove(p.mesh); projectiles.splice(i,1);
+      } else {
+        p.mesh.position.x+=dx2/dd2*p.speed;
+        p.mesh.position.y+=dy2/dd2*p.speed*0.3;
+        p.mesh.position.z+=dz2/dd2*p.speed;
+      }
+      continue;
+    }
+    if(!p.target||p.target.dead){scene.remove(p.mesh);projectiles.splice(i,1);continue;}
+    const tx=p.target.x, tz=p.target.z, ty=1.2;
+    const dx=tx-p.mesh.position.x, dy=ty-p.mesh.position.y, dz=tz-p.mesh.position.z;
+    const dd=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(dd<0.8){
+      // Hit!
+      if(p.splash>0){
+        enemies.forEach(en=>{
+          if(en.dead) return;
+          if(d2({x:tx,z:tz},{x:en.x,z:en.z})<p.splash) en.hp-=p.dmg;
+          if(en.hp<=0) killEnemy(en);
+        });
+      }
+      if(p.target&&p.target.isDragon&&p.target._dr){
+        p.target._dr.hp-=p.dmg*2;
+        if(p.target._dr.hp<=0) killDragon(p.target._dr);
+      } else if(p.target&&!p.target.isDragon&&!p.splash) {
+        p.target.hp-=p.dmg;
+        if(p.target.hp<=0) killEnemy(p.target);
+      }
+      // Hit flash
+      const fl2=SP(p.splash>0?0.9:0.5,6,new THREE.MeshBasicMaterial({color:p.type==='cannon'?0xffaa00:p.type==='magic'?0x8888ff:0xff6600,transparent:true,opacity:0.85}));
+      fl2.position.set(tx,ty,tz); scene.add(fl2);
+      let lf2=0;
+      const ti2=setInterval(()=>{lf2+=0.12;fl2.material.opacity=0.85-lf2;fl2.scale.setScalar(1+lf2*(p.splash>0?4:2));if(lf2>0.85){scene.remove(fl2);clearInterval(ti2);}},25);
+      scene.remove(p.mesh); projectiles.splice(i,1);
+    } else {
+      // Arc trajectory — all ranged weapons fly over friendly units
+      const totalDist = p._totalDist || (()=>{
+        const tdx=tx-p.mesh.position.x, tdz=tz-p.mesh.position.z;
+        p._totalDist = Math.sqrt(tdx*tdx+tdz*tdz);
+        return p._totalDist;
+      })();
+      // Progress 0→1
+      const progress = 1 - dd / (totalDist||1);
+      // Parabolic height: peaks at midpoint, ensures minHeight clearance
+      const peakH = (p.minHeight||2) + totalDist * 0.18;
+      const arcY = Math.sin(progress * Math.PI) * peakH;
+      const targetY = 0.5 + arcY; // land at ground level
+      p.mesh.position.x += dx/dd * p.speed;
+      p.mesh.position.z += dz/dd * p.speed;
+      // Smoothly move Y toward arc target
+      p.mesh.position.y += (targetY - p.mesh.position.y) * 0.18;
+      // Rotate arrow/bolt to follow arc direction
+      if(p.type==='arrow'||p.type==='crossbow'){
+        p.mesh.lookAt(tx, p.mesh.position.y - (targetY - p.mesh.position.y)*2, tz);
+        p.mesh.rotateX(Math.PI/2);
+      }
+    }
+  }
+
+  // ── Animals ──
+  animals.forEach(a=>{
+    a.timer-=dt;
+    if(a.timer<0){a.dir+=(Math.random()-0.5)*1.2;a.timer=rnd(1.5,4);}
+    a.x=Math.max(-50,Math.min(50,a.x+Math.cos(a.dir)*0.022));
+    a.z=Math.max(-50,Math.min(50,a.z+Math.sin(a.dir)*0.022));
+    a.g.position.set(a.x,0,a.z); a.g.rotation.y=a.dir;
+    a.wobble+=dt*3;
+    a.g.children.slice(2).forEach((c,idx)=>{c.position.y=0.28+Math.sin(a.wobble+idx*Math.PI)*0.06;});
+  });
+
+  // ── Smithy flicker ──
+  smithies.forEach(s=>{ s.light.intensity=1.8+Math.sin(T*4.5+s.wx)*0.6+Math.sin(T*7.3)*0.3; });
+  // ── Merchants ──
+  mercs.forEach(m=>{m.bob+=dt;m.g.position.y=Math.sin(m.bob*0.7)*0.04;m.lp.intensity=1.4+Math.sin(T*2)*0.4;});
+
+  // ── Trees ──
+  trees.forEach(t=>{
+    if(t.hp<=0) return;
+    const sw=Math.sin(T*0.65+t.wobble)*0.025;
+    if(t.g.children[1]) t.g.children[1].rotation.z=sw;
+    if(t.g.children[2]) t.g.children[2].rotation.z=sw*0.6;
+  });
+
+  // ── Camera ──
+  const cx=player.x+Math.sin(camTheta)*camRadius*Math.cos(camPhi);
+  const cy=Math.sin(camPhi)*camRadius;
+  const cz=player.z+Math.cos(camTheta)*camRadius*Math.cos(camPhi);
+  cam.position.set(cx,cy,cz);
+  cam.lookAt(player.x,2,player.z);
+
+  // ── Periodic UI refresh ──
+  refreshUI+=dt;
+  if(refreshUI>1){refreshUI=0;refreshSidePanel();updateUnitList();}
+
+  // ── HP Bars ──
+  hpCtx.clearRect(0,0,hpCv.width,hpCv.height);
+  // Castle HP bar
+  drawHPBar(0,8,0,castleHP,maxHP,'🏰 BURG',false,false);
+  // Enemy HP bars
+  enemies.forEach(en=>{
+    if(en.dead) return;
+    drawHPBar(en.x,3.5,en.z,en.hp,en.maxHp,null,true,false);
+  });
+  // Dragon HP bars
+  dragons.forEach(dr=>{
+    if(dr.dead) return;
+    drawHPBar(dr.x,dr.g.position.y+4,dr.z,dr.hp,dr.maxHp,dr.boss?'🐉 URALTER DRACHE':'🐉 Drache',true,true);
+  });
+  // Crossbow HP bars
+  crossbows.forEach(cb=>{
+    if(cb.dead) return;
+    drawHPBar(cb.wx,3.5,cb.wz,cb.hp,cb.maxHp,'🎯 Armbrust',false,false);
+  });
+  // Friendly unit HP bars
+  playerUnits.forEach(u=>{
+    if(u.dead) return;
+    drawHPBar(u.x,2.8,u.z,u.hp,u.maxHp,null,false,false);
+  });
+  // Player HP (always full for simplicity – show as shield)
+  ren.render(scene,cam);
+}
+
+updateHUD();
+animate();
+setTimeout(()=>showBanner('⚜ BAUE DEIN KÖNIGREICH ⚜','Ressourcen sammeln — Burg errichten — Reich verteidigen!'),700);
+</script>
+</body>
+</html>
