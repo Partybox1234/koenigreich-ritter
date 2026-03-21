@@ -7,11 +7,11 @@ const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});
 ren.setPixelRatio(Math.min(devicePixelRatio,2));
 ren.setSize(innerWidth,innerHeight);
 ren.shadowMap.enabled=true; ren.shadowMap.type=THREE.PCFSoftShadowMap;
-ren.toneMapping=THREE.ACESFilmicToneMapping; ren.toneMappingExposure=0.88;
+ren.toneMapping=THREE.ACESFilmicToneMapping; ren.toneMappingExposure=1.18;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x080510);
-scene.fog=new THREE.FogExp2(0x080510,0.013);
+scene.background=new THREE.Color(0x5599dd);
+scene.fog=new THREE.FogExp2(0x5599dd,0.005);
 
 const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,300);
 cam.position.set(0,25,35); cam.lookAt(0,0,0);
@@ -21,13 +21,12 @@ window.addEventListener('resize',()=>{
 });
 
 // ── Lights ──
-scene.add(new THREE.AmbientLight(0x18102a,1.3));
-const sun=new THREE.DirectionalLight(0xffe8cc,2);
+const ambLight=new THREE.HemisphereLight(0x88bbee,0x2a5a10,1.6); scene.add(ambLight);
+const sun=new THREE.DirectionalLight(0xfff0cc,2.8);
 sun.position.set(-20,35,15); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
 ['left','right','top','bottom'].forEach((s,i)=>{sun.shadow.camera[s]=[-60,60,60,-60][i];});
 sun.shadow.camera.far=120; scene.add(sun);
-scene.add(Object.assign(new THREE.DirectionalLight(0x334466,0.5),{position:{set:()=>{}}}) );
 const fill=new THREE.DirectionalLight(0x334466,0.5);
 fill.position.set(15,8,-25); scene.add(fill);
 
@@ -36,8 +35,9 @@ fill.position.set(15,8,-25); scene.add(fill);
 // ══════════════════════════════════════════════════
 const lm=(c,e=0)=>new THREE.MeshLambertMaterial({color:c,emissive:e});
 const MAT={
-  grass:lm(0x1c380c), grass2:lm(0x243d0e), dirt:lm(0x3c2e18),
-  stone:lm(0x58503c), dstone:lm(0x3a3028), wood:lm(0x5c3d1e),
+  grass:lm(0x3a6e18), grass2:lm(0x4a7e20), dirt:lm(0x5a4228),
+  snow:lm(0xeef4ff), sand:lm(0xbcaa70), moss:lm(0x3a6a28), gravel:lm(0x6a6050),
+  stone:lm(0x7a7060), dstone:lm(0x5a5040), wood:lm(0x7a5530),
   bark:lm(0x3d2810), leaves:lm(0x1a4a0a), leaves2:lm(0x285810),
   ore:lm(0x6a6a7a,0x080810), gold_ore:lm(0xc8a020,0x201000),
   roof:lm(0x1a1a30), flag_r:lm(0xcc2222), flag_b:lm(0x2244cc),
@@ -62,6 +62,8 @@ const MAT={
   smithy_stone:lm(0x5a4a38), smithy_anvil:lm(0x222222), smithy_fire:lm(0xff6600,0x331100),
   sword_wood:lm(0x7a5020), sword_stone:lm(0x888880), sword_iron:lm(0x9090aa,0x080810),
   sword_diamond:lm(0x50d0ff,0x0a1a20), sword_nether:lm(0xcc2244,0x220010),
+  snake_body:lm(0x2d7a14,0x030803), snake_scale:lm(0x1a5208,0),
+  snake_tongue:lm(0xcc1111,0), snake_eye:new THREE.MeshBasicMaterial({color:0xff2200}),
 };
 
 // ══════════════════════════════════════════════════
@@ -84,11 +86,18 @@ function lerp(a,b,t){return a+(b-a)*t;}
 //  WORLD
 // ══════════════════════════════════════════════════
 // Ground
-const gg=new THREE.PlaneGeometry(140,140,50,50);
+const gg=new THREE.PlaneGeometry(140,140,70,70);
 const gp=gg.attributes.position;
 for(let i=0;i<gp.count;i++){
   const x=gp.getX(i),z=gp.getZ(i),d=Math.sqrt(x*x+z*z);
-  if(d>8) gp.setY(i,(Math.random()-0.5)*0.6+Math.sin(x*0.18)*0.3+Math.cos(z*0.14)*0.25);
+  if(d>10){
+    const blend=Math.min(1,(d-10)/14);
+    const hills=Math.sin(x*0.09)*2.4+Math.cos(z*0.08)*2.0
+               +Math.sin(x*0.21+z*0.15)*0.8+Math.cos(x*0.14-z*0.19)*0.6;
+    const noise=(Math.random()-0.5)*1.1;
+    const rise=Math.max(0,(d-42)*0.11);
+    gp.setY(i,(hills+noise+rise)*blend);
+  }
 }
 gg.computeVertexNormals();
 place(new THREE.Mesh(gg,MAT.grass),0,0,0,false).rotation.x=-Math.PI/2;
@@ -101,7 +110,21 @@ const pm=new THREE.Mesh(new THREE.PlaneGeometry(3.5,70),MAT.dirt);
 pm.rotation.x=-Math.PI/2; pm.position.set(0,0.02,15); scene.add(pm);
 
 // Lake
-place(new THREE.Mesh(new THREE.PlaneGeometry(16,12),MAT.water),-35,0.08,20,false).rotation.x=-Math.PI/2;
+const waterMesh=place(new THREE.Mesh(new THREE.PlaneGeometry(16,12),MAT.water),-35,0.08,20,false);
+waterMesh.rotation.x=-Math.PI/2;
+
+// Terrain variety patches
+[
+  [-28,-18,24,18,MAT.sand],
+  [32, 34,20,15,MAT.moss],
+  [-42, 28,18,22,MAT.gravel],
+  [26,-42,22,17,MAT.sand],
+  [-16, 42,16,13,MAT.moss],
+  [44, -18,14,20,MAT.gravel],
+].forEach(([px,pz,pw,ph,pm])=>{
+  const tp=new THREE.Mesh(new THREE.PlaneGeometry(pw,ph),pm);
+  tp.rotation.x=-Math.PI/2; tp.position.set(px,0.03,pz); scene.add(tp);
+});
 
 // Stars
 const sv=[];
@@ -109,6 +132,14 @@ for(let i=0;i<900;i++) sv.push(rnd(-160,160),30+rnd(0,100),rnd(-160,160));
 const sg=new THREE.BufferGeometry();
 sg.setAttribute('position',new THREE.Float32BufferAttribute(sv,3));
 scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.22})));
+
+// Fireflies – active at night
+const fireflies=[];
+for(let i=0;i<18;i++){
+  const fl={l:new THREE.PointLight(0x99ff55,0,6),phase:rnd(0,Math.PI*2),dx:rnd(-0.018,0.018),dz:rnd(-0.018,0.018)};
+  fl.l.position.set(rnd(-50,50),1.4,rnd(-50,50));
+  scene.add(fl.l); fireflies.push(fl);
+}
 
 // ══════════════════════════════════════════════════
 //  BUILD GRID
@@ -132,7 +163,7 @@ for(let x=-9;x<=9;x++) for(let z=-9;z<=9;z++){
 // ══════════════════════════════════════════════════
 //  NATURE
 // ══════════════════════════════════════════════════
-const trees=[],ores=[];
+const trees=[],ores=[],obstacles=[],snakes=[];
 function makeTree(x,z){
   const h=rnd(3.5,5.5);
   const g=new THREE.Group();
@@ -153,6 +184,65 @@ function makeOre(x,z,type){
   ores.push({g,x,z,type,hp:2});
 }
 
+function makeSnake(x,z){
+  const g=new THREE.Group();
+  const segs=7;
+  for(let i=0;i<segs;i++){
+    const t=i/(segs-1);
+    const ox=Math.sin(t*Math.PI*1.6)*0.45;
+    const mat=i%2===0?MAT.snake_body:MAT.snake_scale;
+    const seg=B(0.22-t*0.03,0.1,0.26,mat);
+    seg.position.set(ox,0.06,i*-0.3); g.add(seg);
+  }
+  // Head
+  const hd=B(0.28,0.13,0.3,MAT.snake_body); hd.position.set(0,0.07,0.25); g.add(hd);
+  // Eyes
+  [-0.1,0.1].forEach(ex=>{
+    const eye=SP(0.045,4,MAT.snake_eye.clone()); eye.position.set(ex,0.14,0.37); g.add(eye);
+  });
+  // Tongue
+  const tongue=B(0.03,0.02,0.14,MAT.snake_tongue); tongue.position.set(0,0.07,0.52); g.add(tongue);
+  g.position.set(x,0,z); scene.add(g);
+  snakes.push({g,x,z,dir:rnd(0,Math.PI*2),timer:rnd(1,3),wobble:0,cooldown:0,hp:1});
+}
+
+function makeRockCluster(x,z,size){
+  size=size||1;
+  const g=new THREE.Group();
+  const n=3+Math.floor(Math.random()*3);
+  for(let i=0;i<n;i++){
+    const s=size*rnd(0.5,1.1);
+    const rx=rnd(-size*0.7,size*0.7), rz2=rnd(-size*0.7,size*0.7);
+    const rock=SP(s,5,Math.random()>0.45?MAT.stone:MAT.dstone);
+    rock.position.set(rx,s*0.55,rz2);
+    rock.scale.set(rnd(0.8,1.3),rnd(0.55,0.9),rnd(0.8,1.3));
+    rock.castShadow=true; g.add(rock);
+  }
+  for(let i=0;i<4;i++){
+    const p=SP(size*rnd(0.12,0.25),4,MAT.dstone);
+    p.position.set(rnd(-size*1.1,size*1.1),0.1,rnd(-size*1.1,size*1.1));
+    g.add(p);
+  }
+  g.position.set(x,0,z); scene.add(g);
+  obstacles.push({x,z,r:size*1.45});
+}
+
+function makeMountain(x,z,h,r){
+  h=h||9; r=r||5;
+  const g=new THREE.Group();
+  addTo(g,CN(r,     h*0.6, 8,MAT.stone), 0,h*0.30,0);
+  addTo(g,CN(r*0.58,h*0.55,7,MAT.dstone),0,h*0.77,0);
+  addTo(g,CN(r*0.24,h*0.32,6,MAT.snow),  0,h*1.08,0);
+  for(let i=0;i<5;i++){
+    const ang=i/5*Math.PI*2, br=rnd(r*0.5,r*0.85);
+    const rock=SP(rnd(0.5,1.0),5,MAT.stone);
+    rock.position.set(Math.cos(ang)*br,0.35,Math.sin(ang)*br);
+    rock.castShadow=true; g.add(rock);
+  }
+  g.position.set(x,0,z); scene.add(g);
+  obstacles.push({x,z,r:r*0.88});
+}
+
 for(let i=0;i<65;i++){
   let x,z,t=0;
   do{x=rnd(-60,60);z=rnd(-60,60);t++;}
@@ -162,6 +252,22 @@ for(let i=0;i<65;i++){
 for(let i=0;i<18;i++){let x,z,t=0;do{x=rnd(-55,55);z=rnd(-55,55);t++;}while((Math.abs(x)<16&&Math.abs(z)<16)||t>25);makeOre(x,z,'metal');}
 for(let i=0;i<10;i++){let x,z,t=0;do{x=rnd(-55,55);z=rnd(-55,55);t++;}while(t>20);makeOre(x,z,'stone_ore');}
 for(let i=0;i<6;i++){let x,z,t=0;do{x=rnd(-50,50);z=rnd(-50,50);t++;}while(t>20);makeOre(x,z,'gold_ore');}
+
+// Rock clusters – scattered in the outer world
+for(let i=0;i<30;i++){
+  let x,z,t=0;
+  do{x=rnd(-62,62);z=rnd(-62,62);t++;}
+  while((Math.abs(x)<16&&Math.abs(z)<16)||t>40);
+  makeRockCluster(x,z,rnd(0.7,2.2));
+}
+
+// Mountains – corners + cardinal edges
+[[-52,-52],[-52,52],[52,-52],[52,52],
+ [-58,2],[58,-2],[3,-58],[-4,58],
+ [-40,-50],[42,48],[-48,38],[40,-46]
+].forEach(([mx,mz])=>{
+  makeMountain(mx,mz,rnd(8,15),rnd(4.5,7.5));
+});
 
 // ══════════════════════════════════════════════════
 //  ANIMALS & MERCHANTS
@@ -201,6 +307,12 @@ function makeMerchant(x,z,flavor){
 }
 for(let i=0;i<6;i++) makeCow(rnd(-45,45),rnd(-45,45));
 for(let i=0;i<8;i++) makeSheep(rnd(-45,45),rnd(-45,45));
+for(let i=0;i<14;i++){
+  let x,z,t=0;
+  do{x=rnd(-56,56);z=rnd(-56,56);t++;}
+  while((Math.abs(x)<18&&Math.abs(z)<18)||t>30);
+  makeSnake(x,z);
+}
 makeMerchant(20,6,"\"Willkommen, Ritter! Beste Preise!\"");
 makeMerchant(-22,-14,"\"Seltene Waren aus aller Welt!\"");
 makeMerchant(10,-28,"\"Ein gutes Geschäft für uns beide!\"");
@@ -226,7 +338,7 @@ function makePlayer(){
   // Shield
   const shield=B(0.08,0.55,0.45,lm(0x334488)); shield.position.set(-0.42,0.9,0); g.add(shield);
   g.position.set(0,0,8); scene.add(g);
-  return {g,x:0,z:8,speed:0.13,keys:{w:0,s:0,a:0,d:0},swordSwing:0};
+  return {g,x:0,z:8,speed:0.13,keys:{w:0,s:0,a:0,d:0},swordSwing:0,poisoned:0};
 }
 const player=makePlayer();
 
@@ -822,6 +934,15 @@ window.buyRes=function(type,amount,cost){
 //  INTERACTION
 // ══════════════════════════════════════════════════
 function doInteract(){
+  // Snakes – kill with E, +2 Nahrung
+  for(const s of snakes){
+    if(s.hp<=0) continue;
+    if(d2(player,s)<2.2){
+      s.hp=0; scene.remove(s.g);
+      res.food+=2; notify('⚔️ Schlange getötet! +2 Nahrung!',2500);
+      updateHUD(); return;
+    }
+  }
   // Animals
   for(const a of animals){
     if(d2(player,a)<4){
@@ -1067,9 +1188,9 @@ const SWORDS = {
 };
 
 const SMITHS = [
-  {name:'Grummel der Lehrling', cost:40,  bonus:0,   desc:'"Ich lern's noch, aber ich versuch's!"'},
-  {name:'Thorin der Schmied',   cost:100, bonus:0.15, desc:'"20 Jahre am Amboss. Vertraut mir!"'},
-  {name:'Erika Meisterschmied', cost:200, bonus:0.3,  desc:'"Meine Klingen haben Drachen getötet."'},
+  {name:'Grummel der Lehrling', cost:40,  bonus:0,   desc:"Ich lern's noch, aber ich versuch's!"},
+  {name:'Thorin der Schmied',   cost:100, bonus:0.15, desc:"20 Jahre am Amboss. Vertraut mir!"},
+  {name:'Erika Meisterschmied', cost:200, bonus:0.3,  desc:"Meine Klingen haben Drachen getötet."},
 ];
 let hiredSmith = null;
 
@@ -1184,9 +1305,13 @@ function animate(){
   const night=dayTime>0.72||dayTime<0.08;
   if(night!==isNight){
     isNight=night;
-    sun.intensity=night?0.2:2; sun.color.setHex(night?0x223366:0xffe8cc);
-    scene.background.setHex(night?0x04020a:0x080510);
-    scene.fog.color.setHex(night?0x04020a:0x080510);
+    sun.intensity=night?0.15:2.8; sun.color.setHex(night?0x223366:0xfff0cc);
+    scene.background.setHex(night?0x04020a:0x5599dd);
+    scene.fog.color.setHex(night?0x04020a:0x5599dd);
+    scene.fog.density=night?0.012:0.005;
+    ambLight.color.setHex(night?0x112244:0x88bbee);
+    ambLight.groundColor.setHex(night?0x050a05:0x2a5a10);
+    ambLight.intensity=night?0.4:1.6;
   }
 
   // ── Player ──
@@ -1199,8 +1324,19 @@ function animate(){
     const a=camTheta;
     const nx=mx*Math.cos(a)-mz*Math.sin(a);
     const nz=mx*Math.sin(a)+mz*Math.cos(a);
-    player.x=Math.max(-58,Math.min(58,player.x+nx*player.speed));
-    player.z=Math.max(-58,Math.min(58,player.z+nz*player.speed));
+    let npx=Math.max(-58,Math.min(58,player.x+nx*player.speed));
+    let npz=Math.max(-58,Math.min(58,player.z+nz*player.speed));
+    // Collision with rocks and mountains
+    const PR=0.6;
+    obstacles.forEach(o=>{
+      const odx=npx-o.x, odz=npz-o.z;
+      const od=Math.sqrt(odx*odx+odz*odz);
+      if(od<PR+o.r&&od>0.01){
+        const push=(PR+o.r-od)/od;
+        npx+=odx*push; npz+=odz*push;
+      }
+    });
+    player.x=npx; player.z=npz;
     player.g.position.set(player.x,0,player.z);
     player.g.rotation.y=Math.atan2(nx,nz)+Math.PI;
     player.g.children[0].position.y=0.8+Math.sin(T*10)*0.045;
@@ -1612,6 +1748,63 @@ function animate(){
     a.g.position.set(a.x,0,a.z); a.g.rotation.y=a.dir;
     a.wobble+=dt*3;
     a.g.children.slice(2).forEach((c,idx)=>{c.position.y=0.28+Math.sin(a.wobble+idx*Math.PI)*0.06;});
+  });
+
+  // ── Snakes ──
+  snakes.forEach(s=>{
+    if(s.hp<=0) return;
+    s.timer-=dt; s.cooldown=Math.max(0,s.cooldown-dt);
+    if(s.timer<0){s.dir+=(Math.random()-0.5)*2.8;s.timer=rnd(0.8,2.5);}
+    const dp=d2(player,s);
+    if(dp<8){
+      // Chase player
+      const sdx=player.x-s.x, sdz=player.z-s.z;
+      const sdd=Math.sqrt(sdx*sdx+sdz*sdz);
+      if(sdd>0) s.dir=Math.atan2(sdx,sdz);
+      if(dp<1.5&&s.cooldown<=0){
+        player.poisoned=Math.max(player.poisoned,10);
+        s.cooldown=9;
+        notify('🐍 Du wurdest gebissen! VERGIFTET! Drücke E zum Töten!',3500);
+      }
+    }
+    const spd=dp<8?0.055:0.024;
+    s.x=Math.max(-58,Math.min(58,s.x+Math.cos(s.dir)*spd));
+    s.z=Math.max(-58,Math.min(58,s.z+Math.sin(s.dir)*spd));
+    s.wobble+=dt*5;
+    s.g.position.set(s.x,0,s.z); s.g.rotation.y=s.dir;
+    // Slither wiggle
+    for(let i=0;i<7;i++){
+      if(s.g.children[i]) s.g.children[i].position.x=Math.sin(s.wobble+i*0.85)*0.3;
+    }
+  });
+
+  // ── Poison ──
+  if(player.poisoned>0){
+    player.poisoned-=dt;
+    castleHP=Math.max(0,castleHP-dt*0.7);
+    updateHUD();
+    const veil=document.getElementById('poison-veil');
+    if(veil) veil.style.opacity=Math.min(0.45,player.poisoned*0.045).toFixed(3);
+    if(player.poisoned<=0){
+      player.poisoned=0;
+      const veil2=document.getElementById('poison-veil');
+      if(veil2) veil2.style.opacity='0';
+      notify('✅ Gift überwunden! Deine Kräfte kehren zurück.',2500);
+    }
+  }
+
+  // ── Water animation ──
+  waterMesh.position.y=0.06+Math.sin(T*0.75)*0.05;
+  waterMesh.material.opacity=0.55+Math.sin(T*1.2)*0.1;
+
+  // ── Fireflies ──
+  fireflies.forEach(f=>{
+    f.phase+=dt*2.2;
+    f.l.position.x=Math.max(-55,Math.min(55,f.l.position.x+f.dx));
+    f.l.position.z=Math.max(-55,Math.min(55,f.l.position.z+f.dz));
+    f.l.position.y=1.2+Math.sin(f.phase*0.6)*0.9;
+    f.l.intensity=isNight?Math.max(0,Math.sin(f.phase))*1.3:0;
+    if(Math.random()<0.005){f.dx=rnd(-0.022,0.022);f.dz=rnd(-0.022,0.022);}
   });
 
   // ── Smithy flicker ──
