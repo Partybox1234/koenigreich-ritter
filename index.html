@@ -8,13 +8,23 @@
 <body>
 <canvas id="canvas"></canvas>
 
+<!-- HAUPTMENÜ -->
+<div id="main-menu" style="position:fixed;inset:0;background:linear-gradient(160deg,#0a1a2e 0%,#1a3a5c 50%,#0d2010 100%);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:40px;color:#d4a840;text-shadow:0 4px 24px #000,0 0 60px rgba(212,168,64,0.4);letter-spacing:4px;text-align:center;line-height:1.2;">⚔️<br>KÖNIGREICH<br><span style="font-size:22px;letter-spacing:6px;">DER RITTER</span></div>
+  <div style="font-family:'Crimson Text',serif;font-size:15px;color:rgba(200,180,140,0.7);font-style:italic;">"Errichte dein Reich. Verteidige deine Burg."</div>
+  <div style="font-family:'Cinzel Decorative',serif;font-size:11px;color:rgba(212,168,64,0.6);letter-spacing:3px;margin-top:4px;">WELTEN AUSWÄHLEN</div>
+  <div style="display:flex;flex-direction:column;gap:10px;width:340px;" id="world-slots"></div>
+  <div style="position:absolute;bottom:24px;font-family:'Crimson Text',serif;font-size:13px;color:rgba(180,160,120,0.45);">WASD bewegen · E/T interagieren · ESC Pause</div>
+</div>
+
 <!-- TOP -->
 <div id="top-bar">
-  <div class="res-chip"><span class="ico">🪵</span><span class="val" id="r-wood">50</span><span class="lbl">HOLZ</span></div>
-  <div class="res-chip"><span class="ico">⚙️</span><span class="val" id="r-metal">30</span><span class="lbl">METALL</span></div>
-  <div class="res-chip"><span class="ico">🪨</span><span class="val" id="r-stone">20</span><span class="lbl">STEIN</span></div>
-  <div class="res-chip"><span class="ico">🌾</span><span class="val" id="r-food">40</span><span class="lbl">NAHRUNG</span></div>
-  <div class="res-chip"><span class="ico">💰</span><span class="val" id="r-gold">120</span><span class="lbl">GOLD</span></div>
+  <div class="res-chip"><span class="ico">🪵</span><span class="val" id="r-wood">100</span><span class="lbl">HOLZ</span></div>
+  <div class="res-chip"><span class="ico">⚙️</span><span class="val" id="r-metal">100</span><span class="lbl">METALL</span></div>
+  <div class="res-chip"><span class="ico">🪨</span><span class="val" id="r-stone">100</span><span class="lbl">STEIN</span></div>
+  <div class="res-chip"><span class="ico">🌾</span><span class="val" id="r-food">100</span><span class="lbl">NAHRUNG</span></div>
+  <div class="res-chip"><span class="ico">💰</span><span class="val" id="r-gold">500</span><span class="lbl">GOLD</span></div>
+  <div class="res-chip"><span class="ico">🌱</span><span class="val" id="r-seedling">0</span><span class="lbl">SETZLINGE</span></div>
   <div class="res-chip"><span class="ico">👥</span><span class="val" id="r-pop">0</span><span class="lbl">EINHEITEN</span></div>
   <div id="kingdom-name">⚜ DEIN KÖNIGREICH ⚜</div>
   <div id="day-chip">☀️ TAG 1</div>
@@ -33,21 +43,29 @@
   <div id="panel-body"></div>
 </div>
 
+<!-- BAUMENÜ -->
+<div id="build-menu" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:600;background:rgba(10,14,20,0.97);border:1px solid rgba(212,168,64,0.3);border-radius:14px;padding:14px 16px;min-width:340px;max-width:560px;">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:12px;color:rgba(212,168,64,0.8);letter-spacing:2px;margin-bottom:10px;text-align:center;">🏗️ BAUMENÜ</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">
+    <button class="tb" id="tb-wall" onclick="pickBuild('wall')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🧱</span>Mauer<span class="tc">5🪵 10🪨</span></button>
+    <button class="tb" id="tb-tower" onclick="pickBuild('tower')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🗼</span>Turm<span class="tc">15🪵 12⚙️ 8🪨</span></button>
+    <button class="tb" id="tb-gate" onclick="pickBuild('gate')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🚪</span>Tor<span class="tc">12🪵 10🪨 8⚙️</span></button>
+    <button class="tb" id="tb-keep" onclick="pickBuild('keep')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🏰</span>Burg<span class="tc">30🪵 20⚙️ 20🪨</span></button>
+    <button class="tb" id="tb-barracks" onclick="pickBuild('barracks')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🛡️</span>Kaserne<span class="tc">18🪵 12⚙️ 5🪨</span></button>
+    <button class="tb" id="tb-farm" onclick="pickBuild('farm')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🌾</span>Farm<span class="tc">10🪵 4🪨</span></button>
+    <button class="tb" id="tb-market" onclick="pickBuild('market')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🏪</span>Markt<span class="tc">20🪵 10⚙️ 8🪨</span></button>
+    <button class="tb" id="tb-smithy" onclick="pickBuild('smithy')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">⚒️</span>Schmiede<span class="tc">15🪵 20⚙️ 10🪨</span></button>
+    <button class="tb" id="tb-catapult" onclick="pickBuild('catapult')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🏹</span>Katapult<span class="tc">18🪵 15⚙️</span></button>
+    <button class="tb" id="tb-cannon" onclick="pickBuild('cannon')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">💣</span>Kanone<span class="tc">10🪵 25⚙️</span></button>
+    <button class="tb" id="tb-crossbow" onclick="pickBuild('crossbow')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🎯</span>Armbrust<span class="tc">14🪵 16⚙️ 8🪨</span></button>
+  </div>
+</div>
+
 <!-- BOTTOM -->
 <div id="bottom-bar">
   <button class="tb" onclick="setMode('move')"><span class="ti">🏃</span>Bewegen<span class="tc">Spieler</span></button>
   <div class="tb-sep"></div>
-  <button class="tb" id="tb-wall" onclick="setMode('wall')"><span class="ti">🧱</span>Mauer<span class="tc">5🪵 10🪨</span></button>
-  <button class="tb" id="tb-tower" onclick="setMode('tower')"><span class="ti">🗼</span>Turm<span class="tc">15🪵 12⚙️ 8🪨</span></button>
-  <button class="tb" id="tb-gate" onclick="setMode('gate')"><span class="ti">🚪</span>Tor<span class="tc">12🪵 10🪨 8⚙️</span></button>
-  <button class="tb" id="tb-keep" onclick="setMode('keep')"><span class="ti">🏰</span>Burg<span class="tc">30🪵 20⚙️ 20🪨</span></button>
-  <button class="tb" id="tb-barracks" onclick="setMode('barracks')"><span class="ti">🛡️</span>Kaserne<span class="tc">18🪵 12⚙️ 5🪨</span></button>
-  <button class="tb" id="tb-farm" onclick="setMode('farm')"><span class="ti">🌾</span>Farm<span class="tc">10🪵 4🪨</span></button>
-  <button class="tb" id="tb-market" onclick="setMode('market')"><span class="ti">🏪</span>Markt<span class="tc">20🪵 10⚙️ 8🪨</span></button>
-  <button class="tb" id="tb-catapult" onclick="setMode('catapult')"><span class="ti">🏹</span>Katapult<span class="tc">18🪵 15⚙️</span></button>
-  <button class="tb" id="tb-cannon" onclick="setMode('cannon')"><span class="ti">💣</span>Kanone<span class="tc">10🪵 25⚙️</span></button>
-  <button class="tb" id="tb-crossbow" onclick="setMode('crossbow')"><span class="ti">🎯</span>Riesenarmbrust<span class="tc">14🪵 16⚙️ 8🪨</span></button>
-  <button class="tb" id="tb-smithy" onclick="setMode('smithy')"><span class="ti">⚒️</span>Schmiede<span class="tc">15🪵 20⚙️ 10🪨</span></button>
+  <button class="tb" onclick="toggleBuildMenu()"><span class="ti">🏗️</span>Bauen<span class="tc">Gebäude</span></button>
   <div class="tb-sep"></div>
   <button class="tb" onclick="openRecruit()"><span class="ti">⚔️</span>Rekrutieren<span class="tc">Einheiten</span></button>
   <button class="tb danger" onclick="startWave()"><span class="ti">🔥</span>Welle<span class="tc">Angriff!</span></button>
@@ -124,6 +142,13 @@
     <div class="mi-info"><div class="mi-name">❤️ Burg reparieren</div><div class="mi-cost">40 Gold → +50 HP</div></div>
     <button class="mi-btn" onclick="buyRes('repair',50,40)">KAUFEN</button>
   </div>
+  <div class="modal-item" id="egg-shop-item">
+    <div class="mi-info">
+      <div class="mi-name">🥚 Drachen-Ei</div>
+      <div class="mi-cost">200 Gold — Schlüpft nach 40 Sek. zu deinem eigenen Drachen!</div>
+    </div>
+    <button class="mi-btn" onclick="buyDragonEgg()">KAUFEN</button>
+  </div>
   <button class="modal-close" onclick="closeModal('modal-shop')">SCHLIESSEN</button>
 </div>
 
@@ -139,8 +164,10 @@
 <div class="modal" id="modal-smithy" style="max-width:460px;">
   <h2>⚒️ SCHMIEDE</h2>
   <p class="flavor" id="smithy-flavor">"Ich schmiedle das beste Eisen im ganzen Land!"</p>
-  <div id="smithy-tabs" style="display:flex;gap:6px;margin-bottom:12px;">
+  <div id="smithy-tabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
     <button class="mi-btn" onclick="smithyTab('schwerter')" id="stab-schwerter" style="flex:1;">⚔️ Schwerter</button>
+    <button class="mi-btn" onclick="smithyTab('aufrüsten')" id="stab-aufrüsten" style="flex:1;">⬆️ Aufrüsten</button>
+    <button class="mi-btn" onclick="smithyTab('werkzeuge')" id="stab-werkzeuge" style="flex:1;">⛏️ Werkzeug</button>
     <button class="mi-btn" onclick="smithyTab('schmied')" id="stab-schmied" style="flex:1;">👨‍🔧 Schmied</button>
   </div>
   <div id="smithy-body"></div>
@@ -151,8 +178,30 @@
 <div id="dragon-alert"><div class="da-title">🐉 ACHTUNG — DRACHE!</div><div class="da-sub" id="dragon-sub">Ein mächtiger Drache greift an!</div></div>
 <div id="banner"><div id="banner-title">⚔️</div><div id="banner-sub"></div></div>
 <div id="poison-veil"></div>
+<div id="pause-menu" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:18px;">
+  <div style="font-family:'Cinzel Decorative',serif;font-size:32px;color:#d4a840;text-shadow:0 2px 12px #000;letter-spacing:3px;">⏸ PAUSE</div>
+  <div style="font-family:'Crimson Text',serif;font-size:16px;color:rgba(200,180,140,0.8);">ESC → Weiterspielen</div>
+  <button class="mi-btn" style="font-size:15px;padding:12px 32px;" onclick="resumeGame()">▶ WEITERSPIELEN</button>
+  <button class="mi-btn" style="font-size:15px;padding:12px 32px;background:rgba(180,60,60,0.25);" onclick="exitGame()">💾 SPEICHERN &amp; BEENDEN</button>
+</div>
+<div id="player-hpbar" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-direction:column;gap:5px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:8px 14px;pointer-events:none;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:15px;">❤️</span>
+    <div style="width:160px;height:10px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;">
+      <div id="player-hp-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#228822,#44cc44);border-radius:6px;transition:width 0.2s;"></div>
+    </div>
+    <span id="player-hp-text" style="font-family:'Crimson Text',serif;font-size:13px;color:rgba(255,200,200,0.9);min-width:52px;">100/100</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:15px;">🍖</span>
+    <div style="width:160px;height:10px;background:rgba(255,255,255,0.12);border-radius:6px;overflow:hidden;">
+      <div id="player-food-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#a06010,#e08820);border-radius:6px;transition:width 0.2s;"></div>
+    </div>
+    <span id="player-food-text" style="font-family:'Crimson Text',serif;font-size:13px;color:rgba(255,220,150,0.9);min-width:52px;">100/100</span>
+  </div>
+</div>
 <div id="notif"></div>
-<div id="hint">WASD / PFEILE → Spieler bewegen<br>RECHTS-ZIEHEN → Kamera<br>SCROLLEN → Zoom | E → Interagieren</div>
+<div id="hint">WASD / PFEILE → Spieler bewegen<br>RECHTS-ZIEHEN → Kamera<br>SCROLLEN → Zoom | E / T → Interagieren & Abbauen</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="game.js"></script>
