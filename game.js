@@ -234,10 +234,10 @@ const gp=gg.attributes.position;
 for(let i=0;i<gp.count;i++){
   const x=gp.getX(i),z=gp.getZ(i),d=Math.sqrt(x*x+z*z);
   if(d>10){
-    const blend=Math.min(1,(d-10)/14);
+    const blend=Math.min(1,(d-10)/28);
     const hills=Math.sin(x*0.09)*2.4+Math.cos(z*0.08)*2.0
                +Math.sin(x*0.21+z*0.15)*0.8+Math.cos(x*0.14-z*0.19)*0.6;
-    const noise=(Math.random()-0.5)*1.1;
+    const noise=(Math.random()-0.5)*0.35;
     const rise=Math.max(0,(d-42)*0.11);
     gp.setY(i,(hills+noise+rise)*blend);
   }
@@ -310,20 +310,6 @@ function makeCloud(x,y,z){
 }
 for(let i=0;i<10;i++) makeCloud(rnd(-120,120),rnd(30,55),rnd(-120,120));
 
-// Grass tufts
-const grassMat=new THREE.MeshLambertMaterial({color:0x4a8a18,side:THREE.DoubleSide});
-for(let i=0;i<220;i++){
-  const gx=rnd(-58,58),gz=rnd(-58,58);
-  if(Math.abs(gx)<12&&Math.abs(gz)<12) continue;
-  const tuft=new THREE.Group();
-  for(let j=0;j<3;j++){
-    const bl=new THREE.Mesh(new THREE.PlaneGeometry(0.18,rnd(0.35,0.65)),grassMat);
-    bl.rotation.y=j*(Math.PI/3)+rnd(-0.3,0.3);
-    bl.position.set(rnd(-0.1,0.1),bl.geometry.parameters.height*0.5,rnd(-0.1,0.1));
-    tuft.add(bl);
-  }
-  tuft.position.set(gx,0,gz); scene.add(tuft);
-}
 
 // Stars
 const sv=[];
@@ -674,7 +660,183 @@ const COSTS={
   market:{wood:20,metal:10,stone:8},
   catapult:{wood:18,metal:15}, cannon:{wood:10,metal:25},
   smithy:{wood:15,metal:20,stone:10}, crossbow:{wood:14,metal:16,stone:8},
+  werkbank:{wood:12,metal:8},
 };
+
+// ══════════════════════════════════════════════════
+//  INVENTAR & CRAFTING
+// ══════════════════════════════════════════════════
+let inventory=[];   // [{id,name,icon,type,count,atk,hp,heal,hunger}]
+const equippedSlots={weapon:null,shield:null,helmet:null};
+
+const CRAFT_RECIPES=[
+  // WAFFEN
+  {id:'holzbogen',  name:'Holzbogen',   icon:'🏹',type:'weapon',atk:14, cost:{wood:12,metal:3},        desc:'Leichter Bogen. +14 ATK'},
+  {id:'armbrust',   name:'Armbrust',    icon:'🎯',type:'weapon',atk:26, cost:{wood:8,metal:18,stone:5}, desc:'Präzise Armbrust. +26 ATK'},
+  {id:'kurzschwert',name:'Kurzschwert', icon:'🗡️',type:'weapon',atk:16, cost:{wood:6,metal:5},          desc:'Schnelles Schwert. +16 ATK'},
+  {id:'langschwert',name:'Langschwert', icon:'⚔️',type:'weapon',atk:30, cost:{wood:3,metal:14},         desc:'Mächtiges Schwert. +30 ATK'},
+  {id:'streitaxt',  name:'Streitaxt',   icon:'🪓',type:'weapon',atk:24, cost:{wood:12,metal:8},         desc:'Wuchtige Axt. +24 ATK'},
+  // RÜSTUNG
+  {id:'holzschild', name:'Holzschild',  icon:'🛡️',type:'shield',hp:20,  cost:{wood:10},                 desc:'Einfacher Schild. +20 MaxHP'},
+  {id:'eisenschild',name:'Eisenschild', icon:'🔰',type:'shield',hp:45,  cost:{wood:4,metal:16},         desc:'Starker Schild. +45 MaxHP'},
+  {id:'lederhelm',  name:'Lederhelm',   icon:'⛑️',type:'helmet',hp:15,  cost:{wood:8},                  desc:'Leichter Helm. +15 MaxHP'},
+  {id:'eisenhelm',  name:'Eisenhelm',   icon:'🪖',type:'helmet',hp:35,  cost:{metal:10,stone:4},        desc:'Robuster Helm. +35 MaxHP'},
+  // TRÄNKE
+  {id:'heiltrank',  name:'Heiltrank',   icon:'🧪',type:'consumable',heal:60, cost:{food:12,gold:8},     desc:'Stellt 60 HP wieder her'},
+  {id:'wegzehrung', name:'Wegzehrung',  icon:'🍖',type:'consumable',hunger:45,cost:{food:8},            desc:'Füllt 45 Hunger auf'},
+  {id:'staerketrank',name:'Stärketrank',icon:'💪',type:'consumable',atkBuff:10,cost:{food:10,gold:15},  desc:'+10 ATK für 60 Sek.'},
+];
+
+function addToInventory(id,count=1){
+  const recipe=CRAFT_RECIPES.find(r=>r.id===id);
+  if(!recipe) return;
+  const existing=inventory.find(i=>i.id===id);
+  if(existing) existing.count+=count;
+  else inventory.push({...recipe,count});
+}
+
+function craftItem(id){
+  const r=CRAFT_RECIPES.find(x=>x.id===id);
+  if(!r) return;
+  for(const[k,v] of Object.entries(r.cost)){
+    if((res[k]||0)<v){notify(`❌ Nicht genug ${k==='wood'?'🪵 Holz':k==='metal'?'⚙️ Metall':k==='stone'?'🪨 Stein':k==='food'?'🌾 Nahrung':'💰 Gold'}!`);return;}
+  }
+  for(const[k,v] of Object.entries(r.cost)) res[k]-=v;
+  addToInventory(id);
+  updateHUD();
+  notify(`✅ ${r.icon} ${r.name} hergestellt! Im Inventar (🎒).`);
+  renderWbBody();
+}
+
+function invEquip(invIdx){
+  const item=inventory[invIdx];
+  if(!item) return;
+  const slot=item.type==='weapon'?'weapon':item.type==='shield'?'shield':item.type==='helmet'?'helmet':null;
+  if(!slot){invUseConsumable(invIdx);return;}
+  // Altes Item ausrüsten rückgängig
+  if(equippedSlots[slot]){
+    const old=equippedSlots[slot];
+    if(old.type==='weapon')  player.atk-=old.atk;
+    if(old.type==='shield'||old.type==='helmet'){ player.maxHp-=old.hp; player.hp=Math.min(player.hp,player.maxHp);}
+  }
+  // Neues Item ausrüsten
+  equippedSlots[slot]=item;
+  if(item.type==='weapon')  {player.atk+=item.atk; notify(`⚔️ ${item.icon} ${item.name} angelegt! +${item.atk} ATK`);}
+  if(item.type==='shield'||item.type==='helmet'){player.maxHp+=item.hp; player.hp=Math.min(player.hp+item.hp,player.maxHp); notify(`🛡️ ${item.icon} ${item.name} angelegt! +${item.hp} MaxHP`);}
+  updatePlayerHP();
+  renderInventarModal();
+}
+
+function invUnequip(slot){
+  const item=equippedSlots[slot];
+  if(!item) return;
+  if(item.type==='weapon')  player.atk-=item.atk;
+  if(item.type==='shield'||item.type==='helmet'){ player.maxHp-=item.hp; player.hp=Math.min(player.hp,player.maxHp);}
+  equippedSlots[slot]=null;
+  notify(`📦 ${item.icon} ${item.name} abgelegt.`);
+  updatePlayerHP();
+  renderInventarModal();
+}
+
+function invUseConsumable(invIdx){
+  const item=inventory[invIdx];
+  if(!item||item.type!=='consumable') return;
+  if(item.heal)   {player.hp=Math.min(player.maxHp,player.hp+item.heal);   notify(`🧪 ${item.name} getrunken! +${item.heal} HP`,2000);}
+  if(item.hunger) {player.hunger=Math.min(player.maxHunger,player.hunger+item.hunger); notify(`🍖 ${item.name} gegessen! +${item.hunger} Hunger`,2000);}
+  if(item.atkBuff){
+    player.atk+=item.atkBuff;
+    notify(`💪 Stärketrank! +${item.atkBuff} ATK für 60 Sek.`,2500);
+    setTimeout(()=>{player.atk-=item.atkBuff;notify('💪 Stärketrank-Effekt vorbei.',2000);},60000);
+  }
+  item.count--;
+  if(item.count<=0) inventory.splice(invIdx,1);
+  updatePlayerHP(); updateHUD(); renderInventarModal();
+}
+
+let wbActiveTab='waffen';
+window.wbTab=function(tab){
+  wbActiveTab=tab;
+  ['waffen','ruestung','traenke'].forEach(t=>{
+    document.getElementById('wbt-'+t).style.background=t===tab?'rgba(200,160,70,0.35)':'';
+  });
+  renderWbBody();
+};
+
+function renderWbBody(){
+  const body=document.getElementById('wb-body');
+  if(!body) return;
+  const typeMap={waffen:['weapon'],ruestung:['shield','helmet'],traenke:['consumable']};
+  const types=typeMap[wbActiveTab]||['weapon'];
+  const recipes=CRAFT_RECIPES.filter(r=>types.includes(r.type));
+  body.innerHTML='';
+  recipes.forEach(r=>{
+    const costStr=Object.entries(r.cost).map(([k,v])=>`${v}${k==='wood'?'🪵':k==='metal'?'⚙️':k==='stone'?'🪨':k==='food'?'🌾':'💰'}`).join(' ');
+    const canCraft=Object.entries(r.cost).every(([k,v])=>(res[k]||0)>=v);
+    const div=document.createElement('div');
+    div.className='modal-item';
+    div.innerHTML=`
+      <div class="mi-info">
+        <div class="mi-name">${r.icon} ${r.name}</div>
+        <div class="mi-cost">${costStr}</div>
+        <div class="mi-stat">${r.desc}</div>
+      </div>
+      <button class="mi-btn" onclick="craftItem('${r.id}')" ${canCraft?'':'disabled style="opacity:0.4;cursor:not-allowed;"'}>HERSTELLEN</button>`;
+    body.appendChild(div);
+  });
+}
+
+function openWerkbankModal(){
+  wbActiveTab='waffen';
+  document.getElementById('modal-werkbank').classList.add('show');
+  ['waffen','ruestung','traenke'].forEach(t=>{
+    document.getElementById('wbt-'+t).style.background=t==='waffen'?'rgba(200,160,70,0.35)':'';
+  });
+  renderWbBody();
+}
+
+function renderInventarModal(){
+  // Ausgerüstete Slots
+  const eqDiv=document.getElementById('inv-equipped');
+  if(!eqDiv) return;
+  eqDiv.innerHTML='';
+  [['weapon','⚔️ Waffe'],['shield','🛡️ Schild'],['helmet','⛑️ Helm']].forEach(([slot,label])=>{
+    const item=equippedSlots[slot];
+    const div=document.createElement('div');
+    div.className='inv-equip-box'+(item?' filled':'');
+    div.innerHTML=`<div class="ieb-label">${label}</div>
+      <div class="ieb-icon">${item?item.icon:'—'}</div>
+      <div class="ieb-name">${item?item.name:'Leer'}</div>`;
+    if(item) div.onclick=()=>invUnequip(slot);
+    if(item) div.title='Klicken zum Ablegen';
+    eqDiv.appendChild(div);
+  });
+  // Rucksack
+  const grid=document.getElementById('inv-grid');
+  grid.innerHTML='';
+  const totalSlots=20;
+  for(let i=0;i<totalSlots;i++){
+    const item=inventory[i];
+    const div=document.createElement('div');
+    if(item){
+      const isEq=Object.values(equippedSlots).includes(item);
+      div.className='inv-slot'+(isEq?' equipped':'');
+      div.innerHTML=`${isEq?'<span class="seq">AN</span>':''}<span class="si">${item.icon}</span><span class="sn">${item.name.length>8?item.name.slice(0,8)+'…':item.name}</span>${item.count>1?`<span class="sc">×${item.count}</span>`:''}`;
+      if(!isEq) div.onclick=()=>invEquip(i);
+      div.title=item.desc+(item.type!=='consumable'?' (Klicken zum Anlegen)':' (Klicken zum Benutzen)');
+    } else {
+      div.className='inv-slot empty';
+      div.innerHTML='<span class="si">·</span>';
+    }
+    grid.appendChild(div);
+  }
+}
+
+window.openInventar=function(){
+  renderInventarModal();
+  document.getElementById('modal-inventar').classList.add('show');
+};
+
+const workbenches=[];
 
 function canAfford(type){
   const c=COSTS[type];
@@ -816,9 +978,30 @@ function buildAt(gx,gz,skipCost=false){
     const sfire=new THREE.PointLight(0xff6600,2,5); sfire.position.set(-0.4,2.5,0); sg2.add(sfire);
     sg2.position.set(wx,0,wz); scene.add(sg2); meshes.push(sg2);
     smithies.push({wx,wz,light:sfire,g:sg2});
+  } else if(buildMode==='werkbank'){
+    const wg=new THREE.Group();
+    // Tischbeine
+    [[-0.55,-0.55],[0.55,-0.55],[-0.55,0.55],[0.55,0.55]].forEach(([ox,oz])=>{
+      const leg=B(0.12,1.0,0.12,MAT.wood); leg.position.set(ox,0.5,oz); wg.add(leg);
+    });
+    // Tischplatte
+    const top=B(1.5,0.12,1.1,MAT.bark); top.position.y=1.06; wg.add(top);
+    // Holzbretter auf der Platte
+    const plank=B(1.2,0.06,0.18,MAT.wood); plank.position.set(0,1.14,-0.2); wg.add(plank);
+    // Hammer
+    const hndl=B(0.06,0.06,0.5,lm(0x7a5020)); hndl.position.set(0.3,1.16,0.1); hndl.rotation.y=0.5; wg.add(hndl);
+    const hhead=B(0.12,0.12,0.14,sm(0x555555,0.6,0.4)); hhead.position.set(0.46,1.16,0.3); hhead.rotation.y=0.5; wg.add(hhead);
+    // Bogenstab
+    const bow=B(0.05,0.5,0.05,MAT.bark); bow.position.set(-0.3,1.37,0.1); bow.rotation.z=0.3; wg.add(bow);
+    // Kleines Schild
+    const shld=B(0.06,0.3,0.26,lm(0x334488)); shld.position.set(-0.5,1.25,-0.2); shld.rotation.y=0.2; wg.add(shld);
+    // Werkbank-Schild/Label
+    const sign=B(0.6,0.28,0.06,lm(0x5c3d1e)); sign.position.set(0,0.7,0.58); wg.add(sign);
+    wg.position.set(wx,0,wz); scene.add(wg); meshes.push(wg);
+    workbenches.push({wx,wz,g:wg});
   }
   cells[key]={type:buildMode,meshes};
-  notify(`✅ ${({'wall':'Mauer','tower':'Turm','gate':'Tor','keep':'Burg','barracks':'Kaserne','farm':'Farm','market':'Markt','catapult':'Katapult','cannon':'Kanone','smithy':'Schmiede','crossbow':'Riesenarmbrust'}[buildMode]||buildMode.toUpperCase())} erfolgreich erbaut!`);
+  notify(`✅ ${({'wall':'Mauer','tower':'Turm','gate':'Tor','keep':'Burg','barracks':'Kaserne','farm':'Farm','market':'Markt','catapult':'Katapult','cannon':'Kanone','smithy':'Schmiede','crossbow':'Riesenarmbrust','werkbank':'Werkbank'}[buildMode]||buildMode.toUpperCase())} erfolgreich erbaut!`);
   refreshSidePanel();
 }
 
@@ -867,6 +1050,13 @@ function showBanner(title,sub){
 // ══════════════════════════════════════════════════
 //  SIDE PANEL
 // ══════════════════════════════════════════════════
+let panelOpen=true;
+window.toggleSidePanel=function(){
+  panelOpen=!panelOpen;
+  document.getElementById('side-panel').classList.toggle('collapsed',!panelOpen);
+  document.getElementById('bottom-bar').classList.toggle('full',!panelOpen);
+};
+
 let activeTab='build';
 window.showTab=function(tab){
   activeTab=tab;
@@ -1279,6 +1469,10 @@ function doInteract(){
   // Smithy buildings
   for(const s of smithies){
     if(d2(player,{x:s.wx,z:s.wz})<4){ openSmithyModal(); return; }
+  }
+  // Werkbank
+  for(const w of workbenches){
+    if(d2(player,{x:w.wx,z:w.wz})<4){ openWerkbankModal(); return; }
   }
   // Trees
   for(const t of trees){
@@ -2472,6 +2666,12 @@ function saveGame(){
     playerWeaponIdx, playerAtk:player.atk,
     pickaxeIdx,
     hiredSmith,
+    inventory: inventory.map(i=>({id:i.id,count:i.count})),
+    equippedSlots: {
+      weapon: equippedSlots.weapon?.id||null,
+      shield: equippedSlots.shield?.id||null,
+      helmet: equippedSlots.helmet?.id||null,
+    },
     cells:Object.entries(cells)
       .filter(([,v])=>v.type&&v.type!=='center')
       .map(([k,v])=>{const[gx,gz]=k.split('_').map(Number);return{gx,gz,type:v.type};}),
@@ -2503,6 +2703,23 @@ function loadGame(){
   }
   pickaxeIdx=data.pickaxeIdx||0;
   hiredSmith=data.hiredSmith||null;
+  // Inventar laden
+  inventory=[];
+  equippedSlots.weapon=null; equippedSlots.shield=null; equippedSlots.helmet=null;
+  (data.inventory||[]).forEach(({id,count})=>addToInventory(id,count));
+  if(data.equippedSlots){
+    ['weapon','shield','helmet'].forEach(slot=>{
+      const eid=data.equippedSlots[slot];
+      if(eid){
+        const invItem=inventory.find(i=>i.id===eid);
+        if(invItem){
+          equippedSlots[slot]=invItem;
+          if(invItem.type==='weapon') player.atk+=invItem.atk;
+          if(invItem.type==='shield'||invItem.type==='helmet'){player.maxHp+=invItem.hp; player.hp=Math.min(player.hp+invItem.hp,player.maxHp);}
+        }
+      }
+    });
+  }
   (data.units||[]).forEach(u=>{
     const def=UNIT_DEFS[u.type]; if(!def) return;
     const g=makeUnitMesh(u.type);

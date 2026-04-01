@@ -35,6 +35,10 @@
 
 <!-- SIDE PANEL -->
 <div id="side-panel">
+  <div id="panel-toggle" onclick="toggleSidePanel()" title="Menü öffnen/schließen">
+    <span class="pt-icon">MENÜ</span>
+    <span class="pt-arrow">◀</span>
+  </div>
   <div id="panel-tabs">
     <div class="ptab active" onclick="showTab('build')">BAUEN</div>
     <div class="ptab" onclick="showTab('units')">EINHEITEN</div>
@@ -58,6 +62,7 @@
     <button class="tb" id="tb-catapult" onclick="pickBuild('catapult')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🏹</span>Katapult<span class="tc">18🪵 15⚙️</span></button>
     <button class="tb" id="tb-cannon" onclick="pickBuild('cannon')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">💣</span>Kanone<span class="tc">10🪵 25⚙️</span></button>
     <button class="tb" id="tb-crossbow" onclick="pickBuild('crossbow')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🎯</span>Armbrust<span class="tc">14🪵 16⚙️ 8🪨</span></button>
+    <button class="tb" id="tb-werkbank" onclick="pickBuild('werkbank')" style="flex-direction:column;gap:2px;padding:8px 4px;font-size:11px;"><span style="font-size:20px;">🔨</span>Werkbank<span class="tc">12🪵 8⚙️</span></button>
   </div>
 </div>
 
@@ -68,6 +73,7 @@
   <button class="tb" onclick="toggleBuildMenu()"><span class="ti">🏗️</span>Bauen<span class="tc">Gebäude</span></button>
   <div class="tb-sep"></div>
   <button class="tb" onclick="openRecruit()"><span class="ti">⚔️</span>Rekrutieren<span class="tc">Einheiten</span></button>
+  <button class="tb" onclick="openInventar()"><span class="ti">🎒</span>Inventar<span class="tc">Gegenstände</span></button>
   <button class="tb danger" onclick="startWave()"><span class="ti">🔥</span>Welle<span class="tc">Angriff!</span></button>
 </div>
 
@@ -203,7 +209,30 @@
 <div id="notif"></div>
 <div id="hint">WASD / PFEILE → Spieler bewegen<br>RECHTS-ZIEHEN → Kamera<br>SCROLLEN → Zoom | E / T → Interagieren & Abbauen</div>
 
+<!-- WERKBANK MODAL -->
+<div class="modal" id="modal-werkbank" style="max-width:460px;">
+  <h2>🔨 WERKBANK</h2>
+  <p class="flavor">"Handwerk ist die Mutter aller Künste."</p>
+  <div id="wb-tabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="mi-btn" onclick="wbTab('waffen')"  id="wbt-waffen"  style="flex:1;">⚔️ Waffen</button>
+    <button class="mi-btn" onclick="wbTab('ruestung')" id="wbt-ruestung" style="flex:1;">🛡️ Rüstung</button>
+    <button class="mi-btn" onclick="wbTab('traenke')" id="wbt-traenke" style="flex:1;">🧪 Tränke</button>
+  </div>
+  <div id="wb-body"></div>
+  <button class="modal-close" onclick="closeModal('modal-werkbank')">SCHLIESSEN</button>
+</div>
+
+<!-- INVENTAR MODAL -->
+<div class="modal" id="modal-inventar" style="max-width:500px;">
+  <h2>🎒 INVENTAR</h2>
+  <p class="flavor">"Alles was du trägst, macht dich stärker."</p>
+  <div id="inv-equipped" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;"></div>
+  <div style="font-size:8px;letter-spacing:2px;color:var(--text-dim);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:10px;">RUCKSACK</div>
+  <div id="inv-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;"></div>
+  <button class="modal-close" onclick="closeModal('modal-inventar')">SCHLIESSEN</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="game.js"></script>
+<script src="game.js?v=3"></script>
 </body>
 </html>
