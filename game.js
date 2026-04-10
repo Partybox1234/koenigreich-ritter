@@ -1413,7 +1413,46 @@ window.buyDragonEgg=function(){
 //  INTERACTION
 // ══════════════════════════════════════════════════
 function doInteract(){
-  // ── Spieler-Angriff auf Feinde ──
+  // ── Fernkampf: Bogen / Armbrust ──
+  const rangedWpn=equippedSlots.weapon;
+  const isRanged=rangedWpn&&(rangedWpn.id==='holzbogen'||rangedWpn.id==='armbrust');
+  if(isRanged&&player.atkCool<=0){
+    const range=rangedWpn.id==='armbrust'?28:18;
+    let nearest=null,nearestDist=range;
+    for(const en of enemies){
+      if(en.dead) continue;
+      const dist=Math.sqrt((player.x-en.x)**2+(player.z-en.z)**2);
+      if(dist<nearestDist){nearestDist=dist;nearest=en;}
+    }
+    if(nearest){
+      // Pfeil-Mesh vom Spieler
+      const arrowMat=rangedWpn.id==='armbrust'
+        ?new THREE.MeshLambertMaterial({color:0x8a6030})
+        :MAT.arrow;
+      const arrowLen=rangedWpn.id==='armbrust'?0.75:0.65;
+      const mesh=place(CY(0.035,0.035,arrowLen,4,arrowMat),player.x,1.4,player.z,false);
+      const dmg=Math.floor(player.atk*(rangedWpn.id==='armbrust'?1.0:0.75)+Math.random()*10);
+      projectiles.push({
+        mesh,target:nearest,
+        speed:rangedWpn.id==='armbrust'?0.78:0.60,
+        splash:0,dmg,
+        type:rangedWpn.id==='armbrust'?'player_xbow':'player_bow',
+        done:false,arc:true,minHeight:2.0
+      });
+      player.atkCool=rangedWpn.id==='armbrust'?1.4:0.85;
+      // Bogenschuss-Flash beim Spieler
+      const muzzle=SP(0.18,5,new THREE.MeshBasicMaterial({color:0xffdd88,transparent:true,opacity:0.8}));
+      muzzle.position.set(player.x,1.4,player.z); scene.add(muzzle);
+      let mf=0; const mti=setInterval(()=>{mf+=0.2;muzzle.material.opacity=0.8-mf;muzzle.scale.setScalar(1+mf*2);if(mf>0.9){scene.remove(muzzle);clearInterval(mti);}},25);
+      notify(`${rangedWpn.id==='armbrust'?'🎯':'🏹'} Schuss! ${dmg} Schaden! (${Math.round(nearestDist)}m)`,1000);
+      return;
+    } else {
+      notify(`${rangedWpn.id==='armbrust'?'🎯':'🏹'} Kein Feind in Reichweite (${range}m)!`,1500);
+      return;
+    }
+  }
+
+  // ── Nahkampf: Schwert ──
   if(player.atkCool<=0){
     for(const en of enemies){
       if(en.dead) continue;
@@ -2440,7 +2479,7 @@ function animate(){
         if(p.target.hp<=0) killEnemy(p.target);
       }
       // Hit flash
-      const fl2=SP(p.splash>0?0.9:0.5,6,new THREE.MeshBasicMaterial({color:p.type==='cannon'?0xffaa00:p.type==='magic'?0x8888ff:0xff6600,transparent:true,opacity:0.85}));
+      const fl2=SP(p.splash>0?0.9:0.5,6,new THREE.MeshBasicMaterial({color:p.type==='cannon'?0xffaa00:p.type==='magic'?0x8888ff:p.type==='player_bow'?0xffee44:p.type==='player_xbow'?0xffcc00:0xff6600,transparent:true,opacity:0.85}));
       fl2.position.set(tx,ty,tz); scene.add(fl2);
       let lf2=0;
       const ti2=setInterval(()=>{lf2+=0.12;fl2.material.opacity=0.85-lf2;fl2.scale.setScalar(1+lf2*(p.splash>0?4:2));if(lf2>0.85){scene.remove(fl2);clearInterval(ti2);}},25);
